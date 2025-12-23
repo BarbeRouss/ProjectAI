@@ -175,21 +175,21 @@ Instance d'Entretien (réalisations)
 
 ---
 
-## 6. Spécifications Techniques (MVP)
+## 6. Spécifications Générales (MVP)
 
-### 6.1 Type d'Application
-- **Application web** responsive
-- Accessible depuis navigateur desktop et mobile
+### 6.1 Informations Générales
+- **Nom de l'application** : À définir (en collaboration avec le PM).
+- **Prix de l'abonnement** : À définir (en collaboration avec le PM).
 
-### 6.2 Fonctionnalités Exclues du MVP
-- Stockage de fichiers (photos, documents PDF)
-- Application mobile native
-- API publique
+### 6.2 Interface et Expérience Utilisateur
+- **Type** : Application web responsive (Desktop & Mobile).
+- **Frontend** : Next.js 14+.
+- **Design Style** : "Consumer Moderne" (Premium, vibrant, micro-animations).
+- **Langues** : Support du **français** et de l'**anglais** dès le lancement.
 
 ### 6.3 Système de Rappels
-- Notifications par email
-- Calcul automatique des prochaines dates selon périodicité
-- Rappels configurables (X jours avant échéance)
+- Notifications par email.
+- Rappels configurables (X jours avant échéance).
 
 ---
 
@@ -219,29 +219,24 @@ Instance d'Entretien (réalisations)
 
 ---
 
-## 8. Questions en Suspens / À Définir
+## 8. Choix de Design et Identité
 
-1. **Nom de l'application** : À définir
-2. **Prix de l'abonnement mensuel** : À définir
-3. **Design et charte graphique** : À définir
-4. **Langues** : Français uniquement ou multilingue ?
-5. **Fréquence des rappels** : Paramétrable par utilisateur ?
-6. **Limite du nombre de collaborateurs** : Par maison ?
-7. **Processus d'invitation** : Email avec lien d'invitation ?
+1. **Nom de l'application** : À définir (en collaboration avec le PM).
+2. **Style visuel** : **Consumer Moderne**. Focus sur la simplicité d'utilisation alliée à une esthétique haut de gamme (vibrant, animations, premium).
+3. **Paiement** : Intégration **Stripe** pour les abonnements Premium.
 
 ---
 
 ## 9. Prochaines Étapes
 
-1. Validation du cahier des charges
-2. Définition du design (wireframes, mockups)
-3. Choix de la stack technique
-4. Développement du MVP
-5. Tests utilisateurs
-6. Mise en production
+1. ✅ Cahier des charges fonctionnel validé.
+2. ✅ Architecture technique validée.
+3. ⏳ Initialisation de l'environnement de développement (.NET Aspire).
+4. ⏳ Développement du MVP.
 
 ---
 
-**Version** : 1.0  
-**Date** : 2025-12-23  
-**Statut** : Draft - En cours de validation
+**Version** : 1.1 - Validé
+**Date** : 2025-12-23
+**Statut** : Validé
+**Auteur** : Antigravity AI
