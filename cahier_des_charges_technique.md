@@ -198,53 +198,58 @@ Instance d'Entretien (réalisations)
 ### 7.1 Stack Technique Frontend
 
 **Framework Principal**
-- **Next.js 14+** (React avec App Router)
-- **TypeScript** pour la robustesse du code
+- **À choisir (Next.js 14+ ou Blazor)**
+- **TypeScript** (si Next.js) ou **C#** (si Blazor)
 - **Server-Side Rendering (SSR)** pour les performances
 
 **Design et UI**
 - **Tailwind CSS** pour le styling responsive
-- **Shadcn/ui** pour les composants réutilisables et accessibles
+- **Shadcn/ui** (si React) ou **MudBlazor** (si Blazor)
 - **Lucide React** pour les icônes
-- **React Hook Form** + **Zod** pour la validation des formulaires
+- **React Hook Form** + **Zod** (si React) pour la validation des formulaires
 
 **State Management**
-- **TanStack Query (React Query)** pour la gestion du cache et des requêtes API
-- **Zustand** ou **Context API** pour l'état global
+- **TanStack Query** (si React) ou gestion d'état native Blazor
+- **Zustand** ou **Context API** (si React)
 
 ### 7.2 Stack Technique Backend
 
-**API et Serveur**
-- **Next.js API Routes** (full-stack dans le même projet)
-- Architecture RESTful
-- Type safety de bout en bout avec TypeScript
+**Framework Principal**
+- **ASP.NET Core 8 Web API**
+- Langage : **C#**
+- Documentation API : **Swagger/OpenAPI** intégrée
 
 **ORM et Base de Données**
-- **Prisma ORM** pour l'accès à la base de données
+- **Entity Framework Core (EF Core)**
 - **PostgreSQL** comme base de données relationnelle
-- Migrations automatiques et type-safety
+- Migrations gérées par EF Core
+- Fortement typé pour minimiser les erreurs d'exécution
 
-**Hébergement Base de Données**
-- **Neon** (PostgreSQL serverless) ou
-- **Supabase** (PostgreSQL + fonctionnalités avancées) ou
-- **Vercel Postgres** (intégration native)
+**Hébergement API**
+- **Azure App Service** ou **Railway** (support natif .NET)
+- Dockerisation possible pour déploiement universel
+
+**Sécurité Backend**
+- JWT Bearer Authentication
+- ASP.NET Core Identity pour la gestion des utilisateurs
+- Policies-based Authorization pour la matrice de permissions
 
 ### 7.3 Authentification et Sécurité
 
 **Système d'Authentification**
-- **NextAuth.js v5 (Auth.js)**
+- **ASP.NET Core Identity**
 - Email/Password (credentials provider)
 - OAuth optionnel (Google, GitHub)
-- Sessions JWT avec stockage en base de données
+- Sessions JWT
 
 **Sécurité**
-- HTTPS obligatoire (Vercel)
-- Rate limiting on endpoints sensibles
-- Validation des inputs avec Zod
-- Protection SQL Injection (Prisma ORM)
-- Protection XSS (React escape automatique)
-- CSRF tokens (NextAuth)
-- Passwords hashés avec bcrypt
+- HTTPS obligatoire
+- Rate limiting sur endpoints sensibles
+- Validation des inputs
+- Protection SQL Injection (EF Core)
+- XSS Protection
+- CSRF Protection
+- Passwords hashés cryptographiquement
 
 **Conformité RGPD**
 - Consentement explicite pour emails marketing
@@ -257,28 +262,15 @@ Instance d'Entretien (réalisations)
 
 **Solution**
 - **Stripe** pour les abonnements récurrents
+- **Stripe.NET** pour l'intégration backend
 - Stripe Checkout pour le paiement
 - Stripe Customer Portal pour la gestion de l'abonnement
 - Webhooks pour synchronisation automatique
-
-**Flux de Paiement**
-1. Utilisateur clique "Upgrade to Premium"
-2. Création de Stripe Checkout Session
-3. Paiement sur page Stripe hébergée
-4. Webhook confirme le paiement
-5. Activation de l'Organisation en base de données
-
-**Webhooks Stripe**
-- `checkout.session.completed` → Création Organisation/Subscription
-- `invoice.paid` → Renouvellement abonnement
-- `invoice.payment_failed` → Suspension compte
-- `customer.subscription.deleted` → Annulation abonnement
 
 ### 7.5 Système de Notifications Email
 
 **Service Email**
 - **Resend** (recommandé) ou **SendGrid**
-- API moderne avec templates React/JSX
 - 3,000 emails/mois gratuits (Resend)
 
 **Types d'Emails**
@@ -287,33 +279,23 @@ Instance d'Entretien (réalisations)
 - Rappels d'entretien automatiques
 
 **Système de Rappels**
-- **Vercel Cron** pour job quotidien automatique
+- Job planifié (Background Service ou Hangfire)
 - Vérification des entretiens à venir
 - Envoi automatique selon configuration utilisateur
-- Tracking pour éviter les doublons
 
 ### 7.6 Infrastructure et Déploiement
 
-**Hébergement**
-- **Vercel** pour l'application Next.js
-- Déploiement automatique depuis GitHub
-- CDN global
-- SSL automatique
-- Preview deployments pour chaque PR
+**Hébergement API**
+- **Azure/Railway**
+- CI/CD automatisé
 
-**CI/CD**
-- **GitHub Actions** pour linting et tests
-- Déploiement automatique sur merge
+**Hébergement Frontend**
+- **Vercel** (si Next.js) ou **Azure Static Web Apps** (si Blazor WASM)
 
 **Environnements**
 - Production (branche `main`)
 - Staging (branche `develop`)
 - Preview (chaque Pull Request)
-
-**Monitoring**
-- **Vercel Analytics** (performances)
-- **Sentry** (tracking des erreurs)
-- Monitoring natif de la base de données
 
 ### 7.7 Schéma de Base de Données
 
@@ -337,32 +319,17 @@ MaintenanceInstance (réalisations)
 **Gestion des Permissions**
 - Table `HouseAccess` avec rôles (OWNER, COLLABORATOR, TENANT)
 - Permissions (READ, READ_WRITE)
-- Vérification à chaque requête API
-
-**Subscription**
-- Lien avec Stripe Customer ID
-- Status de l'abonnement
-- Date de fin de période
+- Vérification au niveau API (Authorize attribute / Policy)
 
 ### 7.8 Estimation des Coûts (Infrastructure)
 
 **Phase MVP (Tier Gratuits)**
-- Vercel (Hobby): 0€/mois
-- Neon/Supabase (Free): 0€/mois
-- Resend (3k emails/mois): 0€/mois
-- Stripe: 1,5% + 0,25€ par transaction
-- Sentry (limité): 0€/mois
+- Azure (Free Tier) / Railway (Trial)
+- PostgreSQL (Neon/Supabase Free)
+- Resend (Free)
+- Stripe (Commission uniquement)
 
 **Total estimé MVP**: 0€/mois
-
-**Phase Croissance (1000+ utilisateurs actifs)**
-- Vercel (Pro): ~20€/mois
-- Base de données: ~25€/mois
-- Resend: ~20€/mois
-- Stripe: selon volume
-- Sentry: ~26€/mois
-
-**Total estimé croissance**: 90-120€/mois (hors Stripe)
 
 ---
 
@@ -398,9 +365,7 @@ MaintenanceInstance (réalisations)
 2. **Prix de l'abonnement mensuel** : À définir
 3. **Design et charte graphique** : À définir
 4. **Langues** : Français uniquement ou multilingue ?
-5. **Fréquence des rappels** : Paramétrable par utilisateur ?
-6. **Limite du nombre de collaborateurs** : Par maison ?
-7. **Processus d'invitation** : Email avec lien d'invitation ?
+5. **Frontend** : Blazor ou Next.js ?
 
 ---
 
@@ -408,70 +373,28 @@ MaintenanceInstance (réalisations)
 
 ### Phase 1 : Validation et Préparation
 1. ✅ Cahier des charges fonctionnel validé
-2. ✅ Architecture technique validée
-3. ⏳ Validation du budget et coûts d'infrastructure
+2. ✅ Architecture technique validée (.NET Backend)
+3. ⏳ Choix final du frontend (Blazor vs React)
 4. ⏳ Définition du design (wireframes, mockups UI/UX)
 
 ### Phase 2 : Setup Technique
-1. Initialisation du projet Next.js + TypeScript
-2. Configuration Prisma + PostgreSQL (Neon/Supabase)
-3. Setup NextAuth.js pour l'authentification
-4. Configuration Tailwind CSS + Shadcn/ui
-5. Mise en place CI/CD (GitHub Actions + Vercel)
+1. Création de la solution .NET 8
+2. Configuration Entity Framework Core + PostgreSQL
+3. Setup ASP.NET Core Identity
+4. Initialisation du frontend choisi
+5. Mise en place CI/CD
 
 ### Phase 3 : Développement MVP
-1. **Module Authentification**
-   - Inscription/Connexion
-   - Gestion de profil
-   - Reset password
-
-2. **Module Maisons**
-   - CRUD Maisons
-   - Gestion des collaborateurs
-   - Système d'invitation
-
-3. **Module Appareils et Entretiens**
-   - CRUD Appareils
-   - Types d'entretien avec périodicité
-   - Instances d'entretien (historique)
-   - Calcul des prochaines dates
-
-4. **Module Permissions**
-   - Matrice de permissions
-   - Vérification des accès
-   - Gestion des rôles (Owner, Collaborator, Tenant)
-
-5. **Module Abonnements (Stripe)**
-   - Intégration Stripe Checkout
-   - Gestion Organisation (niveau payant)
-   - Webhooks Stripe
-   - Limitation 1 maison (gratuit) vs illimitée (payant)
-   - Customer Portal
-
-6. **Module Notifications**
-   - Intégration Resend/SendGrid
-   - Templates d'emails
-   - Système de rappels automatiques (Cron)
-   - Configuration des notifications par utilisateur
-
-### Phase 4 : Tests et Qualité
-1. Tests unitaires (composants React)
-2. Tests d'intégration (API)
-3. Tests de sécurité et permissions
-4. Validation RGPD
-5. Tests utilisateurs (beta testers)
-
-### Phase 5 : Déploiement et Lancement
-1. Déploiement en staging
-2. Tests finaux
-3. Configuration DNS et domaine
-4. Déploiement en production
-5. Monitoring et analytics
-6. Lancement public
+1. **API Authentification**
+2. **API Gestion des Maisons**
+3. **API Appareils et Entretiens**
+4. **Gestion des Permissions**
+5. **Intégration Stripe.NET**
+6. **Service de Notifications Email**
 
 ---
 
-**Version** : 2.0 - Architecture Technique Intégrée  
+**Version** : 2.1 - Architecture .NET Backend Intégrée  
 **Date** : 2025-12-23  
-**Statut** : Validé - Prêt pour développement  
+**Statut** : Validé - Backend .NET confirmé  
 **Architecte** : Antigravity AI
