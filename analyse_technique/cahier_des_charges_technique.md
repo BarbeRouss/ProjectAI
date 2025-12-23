@@ -225,9 +225,10 @@ Instance d'Entretien (réalisations)
 - Migrations gérées par EF Core
 - Fortement typé pour minimiser les erreurs d'exécution
 
-**Hébergement API**
-- **Azure/Railway**
-- Dockerisation possible pour déploiement universel
+**Hébergement & Orchestration**
+- **.NET Aspire** pour l'orchestration locale et cloud.
+- **Docker** pour la conteneurisation et la portabilité totale.
+- **Azure Container Apps** pour l'hébergement cloud scale-to-zero.
 
 **Sécurité Backend**
 - JWT Bearer Authentication
@@ -285,17 +286,18 @@ Instance d'Entretien (réalisations)
 
 ### 7.6 Infrastructure et Déploiement
 
-**Hébergement API**
-- **Azure/Railway**
-- CI/CD automatisé
+**Orchestration & Infrastructure**
+- **.NET Aspire** : Orchestration des services et ressources
+- **Docker** : Conteneurisation de tous les services
+- **Azure Container Apps** : Déploiement cloud simplifié (via Azure Developer CLI - `azd`)
 
 **Hébergement Frontend**
-- **Vercel** (si Next.js) ou **Azure Static Web Apps** (si Blazor WASM)
+- **Azure Container Apps** (via Docker)
 
-**Environnements**
-- Production (branche `main`)
-- Staging (branche `develop`)
-- Preview (chaque Pull Request)
+**Environnements & CI/CD**
+- **Azure Developer CLI (`azd`)** pour le provisionnement et le déploiement.
+- **GitHub Actions** pour le CI/CD automatisé.
+- **Environnements** : Production (branche `main`), Staging (branche `develop`), Preview (chaque Pull Request).
 
 ### 7.7 Schéma de Base de Données
 
@@ -323,9 +325,9 @@ MaintenanceInstance (réalisations)
 
 ### 7.8 Estimation des Coûts (Infrastructure)
 
-**Phase MVP (Tier Gratuits)**
-- Azure (Free Tier) / Railway (Trial)
-- PostgreSQL (Neon/Supabase Free)
+**Phase MVP (Tier Gratuits / Crédits Azure)**
+- Azure Container Apps (Scale to zero)
+- Azure Database for PostgreSQL (ou Postgres conteneurisé sur ACA)
 - Resend (Free)
 - Stripe (Commission uniquement)
 
@@ -382,7 +384,7 @@ MaintenanceInstance (réalisations)
 2. Configuration Entity Framework Core + PostgreSQL
 3. Setup ASP.NET Core Identity
 4. Initialisation du frontend choisi
-5. Mise en place CI/CD
+5. Mise en place CI/CD avec **GitHub Actions** et **azd**
 
 ### Phase 3 : Développement MVP
 1. **API Authentification**
