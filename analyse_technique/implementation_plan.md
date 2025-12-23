@@ -101,10 +101,6 @@ Ce document propose une architecture technique complète pour le MVP de l'applic
 - Support des transactions
 - Gratuit et open-source
 
-**Schema Principal**:
-
-(Schema omitted for brevity, see database section in technical requirements)
-
 **Hébergement BDD**:
 - **Azure Database for PostgreSQL** (Production).
 - **Conteneur PostgreSQL** orchestré par .NET Aspire (Développement local et potentiellement Staging).
@@ -131,6 +127,12 @@ Ce document propose une architecture technique complète pour le MVP de l'applic
 #### Service Email
 
 **Solution**: **Azure App Service** (SMTP) ou **SendGrid** avec intégration .NET.
+
+**Gestion du Multilingue (Communications)**
+- **MVP** : Support **Français et Anglais**.
+- **Localisation Backend** : Utilisation de `IStringLocalizer` et de fichiers de ressources `.resx` pour les chaînes simples.
+- **Templates Email** : Templates localisés (ex: `Welcome.fr.html`, `Welcome.en.html`) ou moteur de template supportant la localisation (Razor/Liquid).
+- **Préférence Utilisateur** : La langue de communication est stockée dans la table `User` et envoyée dans les headers ou résolue côté backend pour les notifications asynchrones.
 
 **Types d'emails**:
 1. **Emails d'authentification** (vérification, reset password)

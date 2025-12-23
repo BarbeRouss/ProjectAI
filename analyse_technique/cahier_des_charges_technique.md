@@ -138,7 +138,6 @@ Instance d'Entretien (réalisations)
 - Accès limité à la/les maison(s) spécifique(s)
 
 ### 4.2 Matrice de Permissions
-
 | Action | Propriétaire | Collaborateur (R/W) | Collaborateur (R) | Locataire (R/W) | Locataire (R) |
 |--------|--------------|---------------------|-------------------|-----------------|---------------|
 | Voir maison | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -245,7 +244,7 @@ Instance d'Entretien (réalisations)
 
 **Sécurité**
 - HTTPS obligatoire
-- Rate limiting sur endpoints sensibles
+- Rate limiting on endpoints sensibles
 - Validation des inputs
 - Protection SQL Injection (EF Core)
 - XSS Protection
@@ -278,6 +277,12 @@ Instance d'Entretien (réalisations)
 - Emails d'authentification (vérification, reset password)
 - Emails d'invitation (collaborateurs, locataires)
 - Rappels d'entretien automatiques
+
+**Gestion du Multilingue (Communications)**
+- Support **Français et Anglais** pour le MVP.
+- Langue préférée stockée dans le profil `User`.
+- Localisation côté backend pour les communications (Emails, Notifications) via fichiers de ressources `.resx` ou templates localisés.
+- Architecture extensible pour ajout facile de nouvelles langues.
 
 **Système de Rappels**
 - Job planifié (Background Service ou Hangfire)
@@ -366,7 +371,7 @@ MaintenanceInstance (réalisations)
 1. **Nom de l'application** : À définir
 2. **Prix de l'abonnement mensuel** : À définir
 3. **Design et charte graphique** : À définir
-4. **Langues** : Français uniquement ou multilingue ?
+4. **Langues** : Français et Anglais gérés (MVP).
 5. **Frontend** : Blazor ou Next.js ?
 
 ---
@@ -396,7 +401,7 @@ MaintenanceInstance (réalisations)
 
 ---
 
-**Version** : 2.1 - Architecture .NET Backend Intégrée  
+**Version** : 2.2 - Architecture .NET Aspire & Azure Container Apps village
 **Date** : 2025-12-23  
-**Statut** : Validé - Backend .NET confirmé  
+**Statut** : Validé - Backend .NET Aspire & Azure confirmé
 **Architecte** : Antigravity AI
