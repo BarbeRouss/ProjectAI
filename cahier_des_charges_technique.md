@@ -226,7 +226,7 @@ Instance d'Entretien (réalisations)
 - Fortement typé pour minimiser les erreurs d'exécution
 
 **Hébergement API**
-- **Azure App Service** ou **Railway** (support natif .NET)
+- **Azure/Railway**
 - Dockerisation possible pour déploiement universel
 
 **Sécurité Backend**
@@ -359,7 +359,7 @@ MaintenanceInstance (réalisations)
 
 ---
 
-## 9. Questions en Suspens / À Définir
+## 4. Questions en Suspens / À Définir
 
 1. **Nom de l'application** : À définir
 2. **Prix de l'abonnement mensuel** : À définir
@@ -369,7 +369,7 @@ MaintenanceInstance (réalisations)
 
 ---
 
-## 10. Prochaines Étapes
+## 5. Prochaines Étapes
 
 ### Phase 1 : Validation et Préparation
 1. ✅ Cahier des charges fonctionnel validé
