@@ -22,9 +22,10 @@ Ce document propose une architecture technique complète pour le MVP de l'applic
 
 > [!WARNING]
 > **Implications des choix techniques**
-> - L'hébergement sur Vercel + base de données externalisée implique des coûts mensuels
-> - Le système d'emails nécessite un service tiers (coût additionnel)
+> - L'hébergement sur Azure Container Apps implique des coûts (tier gratuit disponible)
+> - Le système d'emails nécessite un service tiers (Resend/SendGrid)
 > - Le système de paiement Stripe prend une commission sur chaque transaction
+> - .NET Aspire nécessite .NET 10 SDK installé
 
 ## Proposed Changes
 
@@ -146,7 +147,8 @@ Infrastructure → Application (via interfaces définies dans Core)
 
 **Schema Principal**:
 
-```prisma
+```csharp
+// Schéma conceptuel (entités EF Core)
 model User {
   id            String   @id @default(cuid())
   email         String   @unique
@@ -302,12 +304,11 @@ async function checkPermission(
 3. **Rappels d'entretien** (automatiques selon périodicité)
 
 **Architecture du système de rappels**:
-- **Cron Job** quotidien (Vercel Cron ou service externe)
-- Vérification des entretiens à venir dans les N prochains jours
+- **Background Service .NET** (Worker Service intégré à .NET Aspire)
+- **Hangfire** ou **Azure Container Apps Jobs** pour jobs planifiés
+- Vérification quotidienne des entretiens à venir dans les N prochains jours
 - Envoi automatique d'emails de rappel
 - Tracking des emails envoyés pour éviter les doublons
-
-- **Job Scheduler** : Background Service .NET, Hangfire, ou Azure Container Apps Jobs orchestrés par Aspire.
 
 ---
 
@@ -412,7 +413,7 @@ NEXT_PUBLIC_APP_URL=
 - **Azure Key Vault** pour la gestion des secrets en production.
 - **HTTPS** obligatoire via l'Ingress d'Azure Container Apps.
 - **Validation des inputs** avec Zod sur toutes les requêtes API
-- **SQL Injection** prévenue par Prisma ORM
+- **SQL Injection** prévenue par EF Core (parameterized queries)
 - **XSS** prévenu par React (escape automatique)
 - **CSRF** tokens via NextAuth
 
@@ -437,8 +438,9 @@ NEXT_PUBLIC_APP_URL=
 
 #### Backup
 
-- Backups automatiques de la base de données (fournis par Neon/Supabase/Vercel)
-- Rétention 7 jours minimum
+- **Azure Database for PostgreSQL** : Backups automatiques quotidiens
+- Rétention configurable (7 à 35 jours)
+- Point-in-time restore disponible
 
 ---
 
@@ -489,9 +491,10 @@ NEXT_PUBLIC_APP_URL=
 Après validation de ce plan d'architecture:
 
 1. **Setup du projet**:
-   - Initialisation Next.js + TypeScript
-   - Configuration Prisma + PostgreSQL
-   - Setup NextAuth.js
+   - Initialisation .NET Aspire AppHost
+   - Configuration Next.js + TypeScript (via Docker)
+   - Configuration EF Core + PostgreSQL
+   - Setup NextAuth.js + ASP.NET Core Identity
 
 2. **Développement des features MVP**:
    - Authentification et gestion utilisateurs
@@ -512,11 +515,11 @@ Après validation de ce plan d'architecture:
 
 | Service | Tier Gratuit | Coût estimé (croissance) |
 |---------|--------------|--------------------------|
-| Vercel | Oui (hobby) | 0€ → 20€/mois (Pro) |
-| Neon/Supabase | Oui | 0€ → 25€/mois |
+| Azure Container Apps | 180k vCPU-s/mois | 0€ → 50€/mois |
+| Azure Database for PostgreSQL | Non (Basic ~15€) | 15€ → 100€/mois |
 | Resend | 3k emails/mois | 0€ → 20€/mois |
 | Stripe | Commission | 1,5% + 0,25€ par transaction |
-| Sentry | Limité | 0€ → 26€/mois |
+| Azure Application Insights | 5 GB/mois | 0€ → 30€/mois |
 
-**Total estimé MVP**: 0€/mois (tier gratuits suffisants pour démarrer)  
-**Total croissance**: ~90-120€/mois pour 1000+ utilisateurs actifs
+**Total estimé MVP**: ~15-20€/mois (tier basiques)  
+**Total croissance**: ~150-200€/mois pour 1000+ utilisateurs actifs
