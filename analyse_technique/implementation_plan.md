@@ -86,42 +86,47 @@ L'application backend suivra les principes de l'**Onion Architecture** (égaleme
 - **Indépendance des frameworks** : La logique métier ne dépend pas des détails d'infrastructure
 - **Testabilité** : Chaque couche peut être testée indépendamment
 - **Maintenabilité** : Séparation claire des responsabilités
-- **Flexibilité** : Les dépendances pointent toujours vers le centre (Domain)
+- **Flexibilité** : Les dépendances pointent toujours vers le centre (Core)
 
 **Structure du projet** :
 ```
 /src
-  /ProjectAI.Domain          # Couche centrale - Entités et interfaces du domaine
-    /Entities                # Entités métier (House, Device, MaintenanceType, etc.)
-    /Enums                   # Énumérations (AccessRole, Permission, etc.)
-    /ValueObjects            # Objets valeur immuables
+  /ProjectAI.Core                # Couche centrale - Entités et interfaces du domaine
+    /Entities                    # Entités métier (House, Device, MaintenanceType, etc.)
+    /Enums                       # Énumérations (AccessRole, Permission, etc.)
+    /ValueObjects                # Objets valeur immuables
+    /Interfaces                  # Interfaces des repositories et services
     
-  /ProjectAI.Application     # Couche application - Logique métier et use cases
-    /Interfaces              # Interfaces des services et repositories
-    /Services                # Services métier (orchestration)
-    /DTOs                    # Data Transfer Objects
-    /Validators              # FluentValidation validators
-    /Mappings                # AutoMapper profiles
+  /ProjectAI.Application         # Couche application - Logique métier et use cases
+    /Services                    # Services métier (orchestration)
+    /DTOs                        # Data Transfer Objects
+    /Validators                  # FluentValidation validators
+    /Mappings                    # AutoMapper profiles (DTO ↔ Core Entities)
     
-  /ProjectAI.Infrastructure  # Couche infrastructure - Implémentations concrètes
-    /Persistence             # EF Core DbContext, Configurations, Migrations
-    /Repositories            # Implémentations des repositories
-    /Identity                # ASP.NET Core Identity configuration
-    /Services                # Services externes (Email, Storage, etc.)
+  /ProjectAI.Infrastructure      # Couche infrastructure - Implémentations concrètes
+    /Persistence                 # EF Core DbContext, Configurations, Migrations
+    /Repositories                # Implémentations des repositories
+    /Identity                    # ASP.NET Core Identity configuration
+    /Services                    # Services externes (Email, Storage, etc.)
+    /Mappings                    # Mappings EF (Core Entities ↔ DB Entities si nécessaire)
     
-  /ProjectAI.API             # Couche présentation - API Web
-    /Controllers             # Contrôleurs API REST
-    /Middleware              # Middlewares custom
-    /Filters                 # Filtres d'action
-    Program.cs               # Point d'entrée, configuration DI
+  /ProjectAI.API                 # Couche présentation - API Web
+    /Controllers                 # Contrôleurs API REST
+    /Middleware                  # Middlewares custom
+    /Filters                     # Filtres d'action
+    Program.cs                   # Point d'entrée, configuration DI
 ```
 
 **Flux de dépendances (Onion)** :
 ```
-API → Application → Domain
+API → Application → Core
   ↓
-Infrastructure → Application
+Infrastructure → Application (via interfaces définies dans Core)
 ```
+
+**Note sur les mappings** :
+- **Application/Mappings** : Conversion entre DTOs (API) et entités Core
+- **Infrastructure/Mappings** : Conversion entre entités Core et entités de persistance EF Core (si vous souhaitez un découplage total entre le Core et EF Core)
 
 ---
 
