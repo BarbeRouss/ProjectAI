@@ -8,7 +8,7 @@ Ce document propose une architecture technique complète pour le MVP de l'applic
 
 > [!IMPORTANT]
 > **Choix de stack technique validés**
-> - Backend : **ASP.NET Core 8 Web API**
+> - Backend : **ASP.NET Core 10 Web API**
 > - Orchestration & Observabilité : **.NET Aspire**
 > - Conteneurisation : **Docker**
 > - Frontend : **Next.js (React)** - Choix final.
@@ -61,7 +61,7 @@ Ce document propose une architecture technique complète pour le MVP de l'applic
 
 #### Architecture API
 
-**Framework**: **ASP.NET Core 8 Web API**
+**Framework**: **ASP.NET Core 10 Web API**
 
 **Justification**:
 - Expertise du propriétaire en .NET facilitate la maintenance et la vérification du code.
@@ -80,13 +80,47 @@ Ce document propose une architecture technique complète pour le MVP de l'applic
 - Support des JWT (JSON Web Tokens) pour la communication avec le frontend.
 - Policies et Roles-based Authorization correspondant à la matrice de permissions.
 
-**Structure du projet**:
+**Architecture Backend : Onion Architecture**
+
+L'application backend suivra les principes de l'**Onion Architecture** (également appelée Clean Architecture), qui garantit:
+- **Indépendance des frameworks** : La logique métier ne dépend pas des détails d'infrastructure
+- **Testabilité** : Chaque couche peut être testée indépendamment
+- **Maintenabilité** : Séparation claire des responsabilités
+- **Flexibilité** : Les dépendances pointent toujours vers le centre (Domain)
+
+**Structure du projet** :
 ```
 /src
-  /ProjectAI.API      # Projet Web API principal
-  /ProjectAI.Data     # Context EF Core, Migrations, Modèles de BDD
-  /ProjectAI.Core     # Logique métier, Interfaces, Services
-  /ProjectAI.Shared   # DTOs partagés entre Frontend et Backend
+  /ProjectAI.Domain          # Couche centrale - Entités et interfaces du domaine
+    /Entities                # Entités métier (House, Device, MaintenanceType, etc.)
+    /Enums                   # Énumérations (AccessRole, Permission, etc.)
+    /ValueObjects            # Objets valeur immuables
+    
+  /ProjectAI.Application     # Couche application - Logique métier et use cases
+    /Interfaces              # Interfaces des services et repositories
+    /Services                # Services métier (orchestration)
+    /DTOs                    # Data Transfer Objects
+    /Validators              # FluentValidation validators
+    /Mappings                # AutoMapper profiles
+    
+  /ProjectAI.Infrastructure  # Couche infrastructure - Implémentations concrètes
+    /Persistence             # EF Core DbContext, Configurations, Migrations
+    /Repositories            # Implémentations des repositories
+    /Identity                # ASP.NET Core Identity configuration
+    /Services                # Services externes (Email, Storage, etc.)
+    
+  /ProjectAI.API             # Couche présentation - API Web
+    /Controllers             # Contrôleurs API REST
+    /Middleware              # Middlewares custom
+    /Filters                 # Filtres d'action
+    Program.cs               # Point d'entrée, configuration DI
+```
+
+**Flux de dépendances (Onion)** :
+```
+API → Application → Domain
+  ↓
+Infrastructure → Application
 ```
 
 ---

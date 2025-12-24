@@ -5,7 +5,8 @@ Ce document détaille l'implémentation technique et l'infrastructure de l'appli
 ## 1. Stack Technique Détaillée
 
 ### 1.1 Backend & API
-- **Framework** : ASP.NET Core 8 Web API (C#)
+- **Framework** : ASP.NET Core 10 Web API (C#)
+- **Architecture** : Onion Architecture (Clean Architecture)
 - **Documentation** : Swagger/OpenAPI intégré
 - **ORM** : Entity Framework Core (EF Core) avec Npgsql
 - **Authentification** : ASP.NET Core Identity (JWT Bearer)
@@ -72,7 +73,7 @@ erDiagram
 
 ---
 
-**Version** : 3.0 - Spécifications Techniques Uniquement  
+**Version** : 4.0 - Migration vers .NET 10
 **Date** : 2025-12-23  
 **Statut** : Validé  
 **Auteur** : Antigravity AI
