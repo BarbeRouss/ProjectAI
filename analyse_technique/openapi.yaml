@@ -1,0 +1,474 @@
+openapi: 3.0.3
+info:
+  title: ProjectAI API
+  description: API for the ProjectAI Home Maintenance Application
+  version: 1.0.0
+servers:
+  - url: https://api.projectai.com/v1
+    description: Production Server
+  - url: http://localhost:5000/v1
+    description: Local Development Server
+
+paths:
+  # ----------------------------------------------------------------------------
+  # Authentication & Onboarding
+  # ----------------------------------------------------------------------------
+  /auth/register:
+    post:
+      summary: Register a new user
+      description: Creates a new user account and a default organization.
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /auth/login:
+    post:
+      summary: Login
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  # ----------------------------------------------------------------------------
+  # Houses
+  # ----------------------------------------------------------------------------
+  /houses:
+    get:
+      summary: List all accessible houses
+      tags: [Houses]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of houses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/House'
+    post:
+      summary: Create a new house
+      description: Requires an active subscription if user already has 1 house.
+      tags: [Houses]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateHouseRequest'
+      responses:
+        '201':
+          description: House created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/House'
+        '403':
+          description: Quota exceeded (Upsell trigger)
+
+  /houses/{houseId}:
+    get:
+      summary: Get house details
+      tags: [Houses]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: houseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: House details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HouseDetail'
+
+  /houses/{houseId}/members:
+    post:
+      summary: Invite a member to the house
+      tags: [Houses]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: houseId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteMemberRequest'
+      responses:
+        '200':
+          description: Invitation sent
+
+  # ----------------------------------------------------------------------------
+  # Devices
+  # ----------------------------------------------------------------------------
+  /houses/{houseId}/devices:
+    get:
+      summary: List devices in a house
+      tags: [Devices]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: houseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of devices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Device'
+    post:
+      summary: Add a device to a house
+      description: Also triggers auto-creation of default maintenance tasks.
+      tags: [Devices]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: houseId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDeviceRequest'
+      responses:
+        '201':
+          description: Device created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+
+  /devices/{deviceId}:
+    get:
+      summary: Get device details
+      tags: [Devices]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Device details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+
+  # ----------------------------------------------------------------------------
+  # Maintenance Definitions (Types)
+  # ----------------------------------------------------------------------------
+  /devices/{deviceId}/maintenance-types:
+    get:
+      summary: List maintenance definitions for a device
+      tags: [Maintenance]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of maintenance types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MaintenanceType'
+    post:
+      summary: Add a maintenance definition
+      tags: [Maintenance]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMaintenanceTypeRequest'
+      responses:
+        '201':
+          description: Maintenance type created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceType'
+
+  # ----------------------------------------------------------------------------
+  # Maintenance Instances (Logs)
+  # ----------------------------------------------------------------------------
+  /maintenance-types/{typeId}/instances:
+    post:
+      summary: Log a maintenance action (Mark as done)
+      tags: [Maintenance]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: typeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogMaintenanceRequest'
+      responses:
+        '201':
+          description: Maintenance logged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceInstance'
+
+  /devices/{deviceId}/maintenance-instances:
+    get:
+      summary: Get maintenance history for a device
+      tags: [Maintenance]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Maintenance history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MaintenanceInstance'
+
+  # ----------------------------------------------------------------------------
+  # Billing
+  # ----------------------------------------------------------------------------
+  /organizations/{organizationId}/checkout-session:
+    post:
+      summary: Create Stripe Checkout Session for Premium upgrade
+      tags: [Billing]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # --- Auth ---
+    RegisterRequest:
+      type: object
+      required: [email, password, name]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        name: { type: string }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+
+    AuthResponse:
+      type: object
+      properties:
+        token: { type: string }
+        expiresIn: { type: integer }
+        user: { $ref: '#/components/schemas/User' }
+
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        name: { type: string }
+
+    # --- Houses ---
+    CreateHouseRequest:
+      type: object
+      required: [name, address, zipCode, city]
+      properties:
+        name: { type: string, example: "Ma Maison" }
+        address: { type: string }
+        zipCode: { type: string }
+        city: { type: string }
+
+    House:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        address: { type: string }
+        city: { type: string }
+        role: 
+          type: string
+          enum: [OWNER, COLLABORATOR, TENANT]
+          description: Current user's role in this house
+
+    HouseDetail:
+      allOf:
+        - $ref: '#/components/schemas/House'
+        - type: object
+          properties:
+            members:
+              type: array
+              items:
+                $ref: '#/components/schemas/HouseMember'
+
+    InviteMemberRequest:
+      type: object
+      required: [email, role]
+      properties:
+        email: { type: string, format: email }
+        role: { type: string, enum: [COLLABORATOR, TENANT] }
+
+    HouseMember:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        role: { type: string, enum: [OWNER, COLLABORATOR, TENANT] }
+        status: { type: string, enum: [PENDING, ACCEPTED] }
+
+    # --- Devices ---
+    CreateDeviceRequest:
+      type: object
+      required: [name, type]
+      properties:
+        name: { type: string }
+        type: { type: string }
+        metadata: { type: object }
+        installDate: { type: string, format: date }
+
+    Device:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string }
+        installDate: { type: string, format: date }
+        metadata: { type: object }
+        nextMaintenanceDate: { type: string, format: date }
+
+    # --- Maintenance ---
+    CreateMaintenanceTypeRequest:
+      type: object
+      required: [name, periodicity]
+      properties:
+        name: { type: string }
+        periodicity: 
+          type: string
+          enum: [ANNUAL, SEMESTRIAL, QUARTERLY, MONTHLY, CUSTOM]
+        customDays: { type: integer }
+        reminderEnabled: { type: boolean }
+        reminderDaysBefore: { type: integer }
+
+    MaintenanceType:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        periodicity: { type: string }
+        nextDate: { type: string, format: date }
+
+    LogMaintenanceRequest:
+      type: object
+      required: [date, status]
+      properties:
+        date: { type: string, format: date }
+        status: { type: string, enum: [COMPLETED] }
+        cost: { type: number }
+        provider: { type: string }
+        notes: { type: string }
+
+    MaintenanceInstance:
+      type: object
+      properties:
+        id: { type: string }
+        date: { type: string, format: date }
+        status: { type: string }
+        cost: { type: number }
+        provider: { type: string }
