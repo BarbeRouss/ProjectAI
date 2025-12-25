@@ -72,7 +72,13 @@ Ce document propose une architecture technique complète pour le MVP de l'applic
 
 **ORM**:
 - **Entity Framework Core (EF Core)**
-- Approche Code-First ou Database-First au choix.
+**Approche de Développement API**:
+- **API-First (Contract-First)** : L'API est définie via `openapi.yaml` avant le code.
+- **Génération de code** : Utilisation d'outils (ex: NSwag, Kiota) pour générer les interfaces C# et le client TypeScript.
+
+**ORM**:
+- **Entity Framework Core (EF Core)**
+- Approche Code-First pour la base de données (alignée sur les modèles du domaine).
 - Support natif de PostgreSQL via Npgsql.
 - Fortement typé et intégré à l'écosystème .NET.
 
