@@ -1,0 +1,50 @@
+# .NET artifacts
+bin/
+obj/
+*.user
+*.suo
+*.sln.DotSettings.user
+.vs/
+.idea/
+*.swp
+*~
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa]ppHost
+*.log
+
+# Node.js
+node_modules/
+.next/
+out/
+.cache/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+nul
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Test results
+TestResults/
+test-results/
+playwright-report/
+*.trx
+
+# IDE
+.vscode/
+*.code-workspace

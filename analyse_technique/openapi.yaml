@@ -358,6 +358,7 @@ components:
         token: { type: string }
         expiresIn: { type: integer }
         user: { $ref: '#/components/schemas/User' }
+        firstHouseId: { type: string, nullable: true, description: "ID of the auto-created first house (only present on registration)" }
 
     User:
       type: object
@@ -369,21 +370,22 @@ components:
     # --- Houses ---
     CreateHouseRequest:
       type: object
-      required: [name, address, zipCode, city]
+      required: [name]
       properties:
         name: { type: string, example: "Ma Maison" }
-        address: { type: string }
-        zipCode: { type: string }
-        city: { type: string }
+        address: { type: string, nullable: true }
+        zipCode: { type: string, nullable: true }
+        city: { type: string, nullable: true }
 
     House:
       type: object
       properties:
         id: { type: string }
         name: { type: string }
-        address: { type: string }
-        city: { type: string }
-        role: 
+        address: { type: string, nullable: true }
+        zipCode: { type: string, nullable: true }
+        city: { type: string, nullable: true }
+        role:
           type: string
           enum: [OWNER, COLLABORATOR, TENANT]
           description: Current user's role in this house
