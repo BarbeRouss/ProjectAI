@@ -5,16 +5,9 @@ import { RegisterPage } from '../pages/register-page';
 
 test.describe('User Flow 4: Collaboration and Sharing', () => {
   test('Invite collaborator as owner', async ({ authenticatedPage: page }) => {
-    // ÉTAPE 1: Create house as owner
-    const dashboardPage = new DashboardPage(page);
-    await dashboardPage.goto();
-    await dashboardPage.clickAddHouse();
+    // User already has "Ma Maison" auto-created and is on the house page
 
-    const housePage = new HousePage(page);
-    await housePage.createHouse('Shared House', '555 Collab St', '77777', 'Collab City');
-    await housePage.expectCreateSuccess();
-
-    // ÉTAPE 2: Register collaborator user first
+    // ÉTAPE 1: Register collaborator user first
     const collaboratorEmail = `collaborator-${Date.now()}@test.com`;
 
     // Open new context for collaborator registration
@@ -27,7 +20,7 @@ test.describe('User Flow 4: Collaboration and Sharing', () => {
     });
     expect(apiResponse.ok()).toBeTruthy();
 
-    // ÉTAPE 3: Invite collaborator (button should be visible on house detail page)
+    // ÉTAPE 2: Invite collaborator (button should be visible on house detail page)
     const inviteButton = page.getByRole('button', { name: /invite member|inviter/i });
 
     // Note: Invite functionality might need dialog implementation
@@ -44,13 +37,7 @@ test.describe('User Flow 4: Collaboration and Sharing', () => {
   });
 
   test('View house members with different roles', async ({ authenticatedPage: page }) => {
-    // Create house
-    const dashboardPage = new DashboardPage(page);
-    await dashboardPage.goto();
-    await dashboardPage.clickAddHouse();
-
-    const housePage = new HousePage(page);
-    await housePage.createHouse('Members House', '666 Member Ave', '66666', 'Member City');
+    // User already has "Ma Maison" auto-created and is on the house page
 
     // Verify members section exists and shows owner
     await expect(page.getByText(/members|membres/i)).toBeVisible();
@@ -58,18 +45,16 @@ test.describe('User Flow 4: Collaboration and Sharing', () => {
   });
 
   test('Cannot create second house on free plan', async ({ authenticatedPage: page }) => {
-    // Create first house
+    // User already has "Ma Maison" auto-created (this is the first house)
+
+    // Navigate to dashboard to try creating a second house
     const dashboardPage = new DashboardPage(page);
     await dashboardPage.goto();
+
+    // Try to add a second house
     await dashboardPage.clickAddHouse();
 
     const housePage = new HousePage(page);
-    await housePage.createHouse('First House', '111 First St', '11111', 'First City');
-
-    // Try to create second house
-    await dashboardPage.goto();
-    await dashboardPage.clickAddHouse();
-
     await housePage.createHouse('Second House', '222 Second St', '22222', 'Second City');
 
     // Should fail with 403 Forbidden (Premium required)

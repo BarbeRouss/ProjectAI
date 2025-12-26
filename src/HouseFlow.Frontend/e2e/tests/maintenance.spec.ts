@@ -4,23 +4,17 @@ import { HousePage } from '../pages/house-page';
 
 test.describe('User Flow 3: Maintenance Logging', () => {
   test('Quick log maintenance', async ({ authenticatedPage: page }) => {
-    // Setup: Create house and device
-    const dashboardPage = new DashboardPage(page);
-    await dashboardPage.goto();
-    await dashboardPage.clickAddHouse();
+    // User already has "Ma Maison" auto-created and is on the house page
 
-    const housePage = new HousePage(page);
-    await housePage.createHouse('Maintenance Test House', '789 Test Rd', '99999', 'Test City');
-
-    // Add device
-    await page.getByRole('link', { name: /add device|ajouter un appareil/i }).first().click();
+    // ÉTAPE 1: Add device to the auto-created house
+    await page.getByRole('button', { name: /add device|ajouter un appareil/i }).first().click();
     await page.getByPlaceholder(/chaudière/i).fill('Détecteur Fumée');
-    await page.getByRole('combobox').selectOption('Détecteur de Fumée');
+    await page.locator('#type').selectOption('Détecteur de Fumée');
     await page.getByRole('button', { name: /save|enregistrer/i }).click();
 
-    // Click on device to view details
+    // ÉTAPE 2: Click on device to view details
     await page.getByText('Détecteur Fumée').click();
-    await expect(page).toHaveURL(/.*devices\/[a-f0-9-]+$/);
+    await expect(page).toHaveURL(/\/fr\/houses\/[a-f0-9-]+\/devices\/[a-f0-9-]+$/);
 
     // Note: Maintenance types are auto-created by backend
     // If there are maintenance types, we can log maintenance
@@ -40,24 +34,18 @@ test.describe('User Flow 3: Maintenance Logging', () => {
   });
 
   test('Detailed log maintenance with cost and provider', async ({ authenticatedPage: page }) => {
-    // Setup: Create house and device
-    const dashboardPage = new DashboardPage(page);
-    await dashboardPage.goto();
-    await dashboardPage.clickAddHouse();
+    // User already has "Ma Maison" auto-created and is on the house page
 
-    const housePage = new HousePage(page);
-    await housePage.createHouse('Detailed Log House', '321 Test Blvd', '88888', 'Test City');
-
-    // Add device
-    await page.getByRole('link', { name: /add device|ajouter un appareil/i }).first().click();
+    // ÉTAPE 1: Add device to the auto-created house
+    await page.getByRole('button', { name: /add device|ajouter un appareil/i }).first().click();
     await page.getByPlaceholder(/chaudière/i).fill('Climatisation');
-    await page.getByRole('combobox').selectOption('Climatisation');
+    await page.locator('#type').selectOption('Climatisation');
     await page.getByRole('button', { name: /save|enregistrer/i }).click();
 
-    // View device details
+    // ÉTAPE 2: View device details
     await page.getByText('Climatisation').click();
 
-    // Log maintenance with details
+    // ÉTAPE 3: Log maintenance with details
     const logButton = page.getByRole('button', { name: /log maintenance|enregistrer/i }).first();
 
     if (await logButton.isVisible()) {

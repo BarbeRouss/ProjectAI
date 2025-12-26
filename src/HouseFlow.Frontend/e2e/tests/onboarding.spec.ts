@@ -5,7 +5,7 @@ import { DashboardPage } from '../pages/dashboard-page';
 import { HousePage } from '../pages/house-page';
 
 test.describe('User Flow 1: Onboarding (First Time Experience)', () => {
-  test('Complete onboarding: Register → First House → Dashboard', async ({ page }) => {
+  test('Complete onboarding: Register → Auto-created House → Add Device', async ({ page }) => {
     // ÉTAPE 1: Registration
     const registerPage = new RegisterPage(page);
     await registerPage.goto();
@@ -17,26 +17,24 @@ test.describe('User Flow 1: Onboarding (First Time Experience)', () => {
     await registerPage.register(name, email, password);
     await registerPage.expectRegisterSuccess();
 
-    // ÉTAPE 2: User is on dashboard
-    const dashboardPage = new DashboardPage(page);
-    await expect(dashboardPage.welcomeHeading).toContainText(name);
+    // ÉTAPE 2: After registration, user is redirected to device creation
+    // for the auto-created house "Ma Maison"
+    await expect(page).toHaveURL(/\/fr\/houses\/[^/]+\/devices\/new/);
 
-    // ÉTAPE 3: Create first house
-    await dashboardPage.clickAddHouse();
+    // ÉTAPE 3: Verify we're on the add device page
+    await expect(page.getByRole('heading', { name: /ajouter un appareil/i })).toBeVisible();
 
-    const housePage = new HousePage(page);
-    await housePage.createHouse(
-      'Ma Maison Principale',
-      '123 Rue de la Paix',
-      '75001',
-      'Paris'
-    );
-    await housePage.expectCreateSuccess();
+    // ÉTAPE 4: Add first device
+    await page.getByLabel(/nom de l'appareil/i).fill('Chaudière Principale');
+    await page.getByLabel(/type d'appareil/i).selectOption('Chaudière Gaz');
+    await page.getByRole('button', { name: /ajouter/i }).click();
 
-    // ÉTAPE 4: Verify house appears in dashboard
-    await dashboardPage.goto();
-    await dashboardPage.expectHouseCount(1);
-    await expect(page.getByText('Ma Maison Principale')).toBeVisible();
+    // ÉTAPE 5: Verify redirect to house page
+    await expect(page).toHaveURL(/\/fr\/houses\/[^/]+$/);
+
+    // ÉTAPE 6: Verify the auto-created house "Ma Maison" exists
+    await expect(page.getByRole('heading', { name: /ma maison/i })).toBeVisible();
+    await expect(page.getByText('Chaudière Principale')).toBeVisible();
   });
 
   test('Login after registration should work', async ({ page, testUser }) => {

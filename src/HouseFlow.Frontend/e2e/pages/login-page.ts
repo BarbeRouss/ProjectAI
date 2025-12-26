@@ -28,7 +28,8 @@ export class LoginPage {
   }
 
   async expectLoginSuccess() {
-    await expect(this.page).toHaveURL(/.*dashboard/);
+    // NEW FLOW: Users with one house are auto-redirected to house details, not dashboard
+    await expect(this.page).toHaveURL(/\/fr\/(dashboard|houses\/[a-f0-9-]+)$/);
   }
 
   async expectLoginError() {

@@ -1,9 +1,9 @@
-# Cahier des Charges - Application de Suivi d'Entretien de Maison
+# Cahier des Charges - House Flow
 
 ## 1. Présentation du Projet
 
 ### 1.1 Objectif
-Développer une application web permettant aux utilisateurs de suivre et gérer les entretiens de leur(s) maison(s) et équipements (chaudière, poêle à bois, alarmes incendie, etc.).
+Développer l'application **House Flow** (domaine cible : `flow.house`), une plateforme web permettant aux utilisateurs de suivre et gérer les entretiens de leur(s) maison(s) et équipements de manière fluide et centralisée.
 
 ### 1.2 Cible Utilisateurs
 - **Propriétaires individuels** : gestion d'une seule propriété (offre gratuite)
@@ -221,7 +221,8 @@ Instance d'Entretien (réalisations)
 
 ## 8. Choix de Design et Identité
 
-1. **Nom de l'application** : À définir (en collaboration avec le PM).
+1. **Nom de l'application** : **House Flow** (Validé)
+    - Domaine cible : `flow.house` (en collaboration avec le PM).
 2. **Style visuel** : **Consumer Moderne**. Focus sur la simplicité d'utilisation alliée à une esthétique haut de gamme (vibrant, animations, premium).
 3. **Paiement** : Intégration **Stripe** pour les abonnements Premium.
 

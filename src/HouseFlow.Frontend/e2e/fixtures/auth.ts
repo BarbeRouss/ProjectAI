@@ -19,7 +19,7 @@ export const test = base.extend<{
   testUser: async ({}, use) => {
     const user: TestUser = {
       email: generateTestEmail(),
-      password: 'TestPassword123!',
+      password: 'TestPassword123',
       name: 'Test User',
     };
     await use(user);
@@ -28,7 +28,7 @@ export const test = base.extend<{
   authenticatedPage: async ({ page, testUser }: { page: Page; testUser: TestUser }, use) => {
     const API_URL = process.env.API_URL || 'http://localhost:5203';
 
-    // Register user via API
+    // Register user via API (creates auto-house "Ma Maison")
     const registerResponse = await page.request.post(`${API_URL}/v1/auth/register`, {
       data: testUser,
     });
@@ -36,7 +36,7 @@ export const test = base.extend<{
     expect(registerResponse.ok()).toBeTruthy();
     const authData = await registerResponse.json();
 
-    // Store token in localStorage
+    // Store token and user in localStorage
     await page.goto('http://localhost:3000/fr/login');
     await page.evaluate((token) => {
       localStorage.setItem('houseflow_auth_token', token);
@@ -48,7 +48,13 @@ export const test = base.extend<{
 
     // Navigate to dashboard
     await page.goto('http://localhost:3000/fr/dashboard');
-    await page.waitForURL('**/dashboard');
+
+    // Wait for page to load
+    await page.waitForLoadState('domcontentloaded');
+
+    // Users with one house are auto-redirected to /houses/{id}
+    // Wait a bit for the redirect to happen
+    await page.waitForTimeout(1000);
 
     await use(page);
   },

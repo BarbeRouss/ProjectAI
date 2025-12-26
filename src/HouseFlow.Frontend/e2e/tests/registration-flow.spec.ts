@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Complete Registration Flow', () => {
-  test('User can register and is redirected to dashboard', async ({ page }) => {
+  test('User can register and is redirected to device creation', async ({ page }) => {
     // Navigate to register page
     await page.goto('http://localhost:3000/fr/register');
 
@@ -22,20 +22,14 @@ test.describe('Complete Registration Flow', () => {
     // Submit form
     await page.getByRole('button', { name: /s'inscrire|sign up/i }).click();
 
-    // Wait for redirect to dashboard
-    await page.waitForURL('**/dashboard', { timeout: 10000 });
+    // NEW FLOW: Wait for redirect to device creation page for auto-created house
+    await page.waitForURL(/\/fr\/houses\/[^/]+\/devices\/new/, { timeout: 10000 });
 
-    // Verify we're on dashboard
-    expect(page.url()).toContain('/dashboard');
+    // Verify we're on the add device page
+    await expect(page.getByRole('heading', { name: /ajouter un appareil/i })).toBeVisible({ timeout: 10000 });
 
-    // Verify welcome message is displayed
-    await expect(page.getByRole('heading', { name: /bienvenue|welcome/i })).toBeVisible({ timeout: 10000 });
-
-    // Verify user name appears somewhere on the page
-    await expect(page.getByText(name)).toBeVisible();
-
-    // Verify dashboard content is present
-    await expect(page.getByText(/mes maisons|my houses/i)).toBeVisible();
+    // Verify the page contains device type selection
+    await expect(page.getByLabel(/type d'appareil/i)).toBeVisible();
   });
 
   test('User can login after registration', async ({ page }) => {
@@ -51,8 +45,8 @@ test.describe('Complete Registration Flow', () => {
     await page.getByPlaceholder('••••••••').fill(password);
     await page.getByRole('button', { name: /s'inscrire/i }).click();
 
-    // Wait for dashboard
-    await page.waitForURL('**/dashboard');
+    // Wait for device creation page after registration
+    await page.waitForURL(/\/fr\/houses\/[^/]+\/devices\/new/);
 
     // Logout (simulate by clearing local storage and going to login)
     await page.evaluate(() => {
@@ -67,12 +61,13 @@ test.describe('Complete Registration Flow', () => {
     await page.getByPlaceholder('••••••••').fill(password);
     await page.getByRole('button', { name: /se connecter|login/i }).click();
 
-    // Verify redirect to dashboard
-    await page.waitForURL('**/dashboard', { timeout: 10000 });
-    expect(page.url()).toContain('/dashboard');
+    // NEW FLOW: User with one house is auto-redirected to house details
+    await page.waitForURL(/\/fr\/houses\/[^/]+$/, { timeout: 10000 });
 
-    // Verify user is logged in - check for welcome heading and user name
-    await expect(page.getByRole('heading', { name: /bienvenue|welcome/i })).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText(name)).toBeVisible();
+    // Verify we're on the house page
+    expect(page.url()).toMatch(/\/fr\/houses\/[^/]+$/);
+
+    // Verify house page is displayed with "Ma Maison" (auto-created house)
+    await expect(page.getByRole('heading', { name: /ma maison/i })).toBeVisible({ timeout: 10000 });
   });
 });

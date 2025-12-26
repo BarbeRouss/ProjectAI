@@ -31,7 +31,8 @@ export class RegisterPage {
   }
 
   async expectRegisterSuccess() {
-    await expect(this.page).toHaveURL(/.*dashboard/);
+    // NEW FLOW: After registration, users are redirected to device creation for the auto-created house
+    await expect(this.page).toHaveURL(/\/fr\/houses\/[a-f0-9-]+\/devices\/new/);
   }
 
   async expectRegisterError() {
