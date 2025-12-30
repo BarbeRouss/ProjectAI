@@ -11,13 +11,24 @@ test.describe('Complete Registration Flow', () => {
     // Generate unique email
     const timestamp = Date.now();
     const email = `testuser${timestamp}@houseflow.test`;
-    const password = 'TestPassword123';
+    const password = 'TestPassword123!'; // Meets new requirements
     const name = 'Test User';
 
-    // Fill registration form
-    await page.getByPlaceholder('Jean Dupont').fill(name);
-    await page.getByPlaceholder('you@example.com').fill(email);
-    await page.getByPlaceholder('••••••••').fill(password);
+    // Fill registration form (webkit compatibility - use pressSequentially)
+    const nameField = page.getByPlaceholder('Jean Dupont');
+    await nameField.click();
+    await nameField.pressSequentially(name, { delay: 50 });
+    await expect(nameField).toHaveValue(name);
+
+    const emailField = page.getByPlaceholder('you@example.com');
+    await emailField.click();
+    await emailField.pressSequentially(email, { delay: 50 });
+    await expect(emailField).toHaveValue(email);
+
+    const passwordField = page.getByPlaceholder('••••••••');
+    await passwordField.click();
+    await passwordField.pressSequentially(password, { delay: 50 });
+    await expect(passwordField).toHaveValue(password);
 
     // Submit form
     await page.getByRole('button', { name: /s'inscrire|sign up/i }).click();
@@ -36,29 +47,55 @@ test.describe('Complete Registration Flow', () => {
     // First, register a user
     const timestamp = Date.now();
     const email = `testuser${timestamp}@houseflow.test`;
-    const password = 'TestPassword123';
+    const password = 'TestPassword123!'; // Meets new requirements
     const name = 'Test User';
 
     await page.goto('http://localhost:3000/fr/register');
-    await page.getByPlaceholder('Jean Dupont').fill(name);
-    await page.getByPlaceholder('you@example.com').fill(email);
-    await page.getByPlaceholder('••••••••').fill(password);
+
+    // Fill registration form (webkit compatibility - use pressSequentially)
+    const nameField = page.getByPlaceholder('Jean Dupont');
+    await nameField.click();
+    await nameField.pressSequentially(name, { delay: 50 });
+    await expect(nameField).toHaveValue(name);
+
+    const emailField = page.getByPlaceholder('you@example.com');
+    await emailField.click();
+    await emailField.pressSequentially(email, { delay: 50 });
+    await expect(emailField).toHaveValue(email);
+
+    const passwordField = page.getByPlaceholder('••••••••');
+    await passwordField.click();
+    await passwordField.pressSequentially(password, { delay: 50 });
+    await expect(passwordField).toHaveValue(password);
+
     await page.getByRole('button', { name: /s'inscrire/i }).click();
 
     // Wait for device creation page after registration
     await page.waitForURL(/\/fr\/houses\/[^/]+\/devices\/new/);
 
-    // Logout (simulate by clearing local storage and going to login)
+    // Logout (simulate by clearing session storage and going to login)
     await page.evaluate(() => {
-      localStorage.clear();
+      sessionStorage.clear();
+      // Clear the access token from memory
+      if ((window as any).__setAccessToken) {
+        (window as any).__setAccessToken(null);
+      }
     });
 
     // Navigate to login page
     await page.goto('http://localhost:3000/fr/login');
 
-    // Login with same credentials
-    await page.getByPlaceholder('you@example.com').fill(email);
-    await page.getByPlaceholder('••••••••').fill(password);
+    // Login with same credentials (webkit compatibility - use pressSequentially)
+    const loginEmailField = page.getByPlaceholder('you@example.com');
+    await loginEmailField.click();
+    await loginEmailField.pressSequentially(email, { delay: 50 });
+    await expect(loginEmailField).toHaveValue(email);
+
+    const loginPasswordField = page.getByPlaceholder('••••••••');
+    await loginPasswordField.click();
+    await loginPasswordField.pressSequentially(password, { delay: 50 });
+    await expect(loginPasswordField).toHaveValue(password);
+
     await page.getByRole('button', { name: /se connecter|login/i }).click();
 
     // NEW FLOW: User with one house is auto-redirected to house details

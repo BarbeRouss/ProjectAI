@@ -16,7 +16,7 @@ export class RegisterPage {
     this.passwordInput = page.getByPlaceholder('••••••••');
     this.registerButton = page.getByRole('button', { name: /sign up|s'inscrire/i });
     this.loginLink = page.getByRole('link', { name: /sign in|se connecter/i });
-    this.errorMessage = page.locator('.bg-red-50, .bg-red-900\\/20');
+    this.errorMessage = page.locator('.bg-red-50, [class*="bg-red-900"]');
   }
 
   async goto() {
@@ -24,15 +24,26 @@ export class RegisterPage {
   }
 
   async register(name: string, email: string, password: string) {
-    await this.nameInput.fill(name);
-    await this.emailInput.fill(email);
-    await this.passwordInput.fill(password);
+    // Webkit requires special handling - type character by character to ensure React state updates
+    await this.nameInput.click();
+    await this.nameInput.pressSequentially(name, { delay: 50 });
+    await expect(this.nameInput).toHaveValue(name);
+
+    await this.emailInput.click();
+    await this.emailInput.pressSequentially(email, { delay: 50 });
+    await expect(this.emailInput).toHaveValue(email);
+
+    await this.passwordInput.click();
+    await this.passwordInput.pressSequentially(password, { delay: 50 });
+    await expect(this.passwordInput).toHaveValue(password);
+
     await this.registerButton.click();
   }
 
   async expectRegisterSuccess() {
     // NEW FLOW: After registration, users are redirected to device creation for the auto-created house
-    await expect(this.page).toHaveURL(/\/fr\/houses\/[a-f0-9-]+\/devices\/new/);
+    // Wait longer for webkit (it might be slower with cookie handling)
+    await expect(this.page).toHaveURL(/\/fr\/houses\/[a-f0-9-]+\/devices\/new/, { timeout: 15000 });
   }
 
   async expectRegisterError() {

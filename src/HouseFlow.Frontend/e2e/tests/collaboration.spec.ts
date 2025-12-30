@@ -14,7 +14,7 @@ test.describe('User Flow 4: Collaboration and Sharing', () => {
     const apiResponse = await page.request.post('http://localhost:5203/v1/auth/register', {
       data: {
         email: collaboratorEmail,
-        password: 'Test123!',
+        password: 'TestPassword123!', // Meets requirements: 12+ chars, uppercase, lowercase, digit, special char
         name: 'Collaborator User',
       },
     });
@@ -47,13 +47,11 @@ test.describe('User Flow 4: Collaboration and Sharing', () => {
   test('Cannot create second house on free plan', async ({ authenticatedPage: page }) => {
     // User already has "Ma Maison" auto-created (this is the first house)
 
-    // Navigate to dashboard to try creating a second house
-    const dashboardPage = new DashboardPage(page);
-    await dashboardPage.goto();
+    // Navigate directly to create house page (bypasses auto-redirect)
+    await page.goto('/fr/houses/new');
+    await page.waitForLoadState('networkidle');
 
-    // Try to add a second house
-    await dashboardPage.clickAddHouse();
-
+    // Try to create a second house
     const housePage = new HousePage(page);
     await housePage.createHouse('Second House', '222 Second St', '22222', 'Second City');
 

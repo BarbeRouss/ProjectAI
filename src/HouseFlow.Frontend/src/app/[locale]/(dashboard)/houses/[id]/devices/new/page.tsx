@@ -18,11 +18,7 @@ export default function NewDevicePage({ params }: { params: Promise<{ id: string
   const [type, setType] = useState('');
   const [installDate, setInstallDate] = useState('');
 
-  const createDeviceMutation = useCreateDevice(houseId, {
-    onSuccess: () => {
-      router.push(`/${locale}/houses/${houseId}`);
-    },
-  });
+  const createDeviceMutation = useCreateDevice(houseId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +27,13 @@ export default function NewDevicePage({ params }: { params: Promise<{ id: string
       type,
       installDate: installDate || null,
       metadata: null,
+    }, {
+      onSuccess: () => {
+        // Wait a bit for the query invalidation to propagate
+        setTimeout(() => {
+          router.push(`/${locale}/houses/${houseId}`);
+        }, 100);
+      },
     });
   };
 

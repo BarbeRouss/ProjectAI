@@ -13,8 +13,10 @@ test.describe('User Flow 3: Maintenance Logging', () => {
     await page.getByRole('button', { name: /save|enregistrer/i }).click();
 
     // ÉTAPE 2: Click on device to view details
-    await page.getByText('Détecteur Fumée').click();
-    await expect(page).toHaveURL(/\/fr\/houses\/[a-f0-9-]+\/devices\/[a-f0-9-]+$/);
+    // Wait for device to appear, then click View Details button
+    await expect(page.getByRole('heading', { name: 'Détecteur Fumée' })).toBeVisible();
+    await page.getByRole('button', { name: /view details|voir les détails/i }).first().click();
+    await expect(page).toHaveURL(/\/fr\/devices\/[a-f0-9-]+$/);
 
     // Note: Maintenance types are auto-created by backend
     // If there are maintenance types, we can log maintenance
@@ -43,7 +45,8 @@ test.describe('User Flow 3: Maintenance Logging', () => {
     await page.getByRole('button', { name: /save|enregistrer/i }).click();
 
     // ÉTAPE 2: View device details
-    await page.getByText('Climatisation').click();
+    await expect(page.getByRole('heading', { name: 'Climatisation' })).toBeVisible();
+    await page.getByRole('button', { name: /view details|voir les détails/i }).first().click();
 
     // ÉTAPE 3: Log maintenance with details
     const logButton = page.getByRole('button', { name: /log maintenance|enregistrer/i }).first();

@@ -18,6 +18,10 @@ export class DashboardPage {
   }
 
   async clickAddHouse() {
+    // Wait for the element to be visible and stable (webkit hydration issue)
+    await this.addHouseButton.waitFor({ state: 'visible', timeout: 10000 });
+    // Add a small delay to ensure React hydration is complete
+    await this.page.waitForTimeout(500);
     await this.addHouseButton.click();
   }
 

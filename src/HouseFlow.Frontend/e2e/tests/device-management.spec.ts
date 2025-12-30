@@ -39,7 +39,7 @@ test.describe('User Flow 2: Device Management', () => {
 
     // Verify all devices are visible
     for (const device of devices) {
-      await expect(page.getByText(device.name)).toBeVisible();
+      await expect(page.getByRole('heading', { name: device.name })).toBeVisible();
     }
   });
 });

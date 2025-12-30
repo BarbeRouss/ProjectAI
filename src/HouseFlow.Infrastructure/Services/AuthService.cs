@@ -7,6 +7,7 @@ using HouseFlow.Core.Entities;
 using HouseFlow.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using BCryptNet = BCrypt.Net.BCrypt;
 
@@ -16,19 +17,24 @@ public class AuthService : IAuthService
 {
     private readonly HouseFlowDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(HouseFlowDbContext context, IConfiguration configuration)
+    public AuthService(HouseFlowDbContext context, IConfiguration configuration, ILogger<AuthService> logger)
     {
         _context = context;
         _configuration = configuration;
+        _logger = logger;
     }
 
-    public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request)
+    public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request, string? ipAddress = null)
     {
+        _logger.LogInformation("Registration attempt for email: {Email}", request.Email);
+
         // Check if user already exists
         if (await _context.Users.AnyAsync(u => u.Email == request.Email))
         {
-            throw new InvalidOperationException("User with this email already exists");
+            _logger.LogWarning("Registration failed - email already exists: {Email}", request.Email);
+            throw new InvalidOperationException("Registration failed. Please check your information.");
         }
 
         // Create user
@@ -40,6 +46,9 @@ public class AuthService : IAuthService
             PasswordHash = BCryptNet.HashPassword(request.Password),
             CreatedAt = DateTime.UtcNow
         };
+
+        // Set audit context for this operation
+        _context.SetAuditContext(null, request.Email, ipAddress);
 
         _context.Users.Add(user);
 
@@ -85,32 +94,151 @@ public class AuthService : IAuthService
 
         await _context.SaveChangesAsync();
 
-        var token = GenerateJwtToken(user.Id, user.Email);
+        _logger.LogInformation("User registered successfully: {UserId}, Email: {Email}", user.Id, user.Email);
+
+        // Generate tokens
+        var jwtToken = GenerateJwtToken(user.Id, user.Email);
+        var refreshToken = await GenerateRefreshToken(user.Id, ipAddress);
 
         return new AuthResponseDto(
-            token,
-            3600,
+            jwtToken,
+            900, // 15 minutes (changed from 3600 for security with refresh tokens)
             new UserDto(user.Id, user.Email, user.Name),
+            refreshToken.Token,
             house.Id
         );
     }
 
-    public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
+    public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request, string? ipAddress = null)
     {
+        _logger.LogInformation("Login attempt for email: {Email}", request.Email);
+
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
 
-        if (user == null || !BCryptNet.Verify(request.Password, user.PasswordHash))
+        if (user == null)
         {
+            _logger.LogWarning("Login failed - user not found: {Email}", request.Email);
             throw new UnauthorizedAccessException("Invalid email or password");
         }
 
-        var token = GenerateJwtToken(user.Id, user.Email);
+        if (!BCryptNet.Verify(request.Password, user.PasswordHash))
+        {
+            _logger.LogWarning("Login failed - invalid password for user: {UserId}", user.Id);
+            throw new UnauthorizedAccessException("Invalid email or password");
+        }
+
+        _logger.LogInformation("User logged in successfully: {UserId}", user.Id);
+
+        // Set audit context
+        _context.SetAuditContext(user.Id, user.Email, ipAddress);
+
+        // Generate tokens
+        var jwtToken = GenerateJwtToken(user.Id, user.Email);
+        var refreshToken = await GenerateRefreshToken(user.Id, ipAddress);
 
         return new AuthResponseDto(
-            token,
-            3600,
-            new UserDto(user.Id, user.Email, user.Name)
+            jwtToken,
+            900, // 15 minutes
+            new UserDto(user.Id, user.Email, user.Name),
+            refreshToken.Token
         );
+    }
+
+    public async Task<AuthResponseDto> RefreshTokenAsync(string token, string? ipAddress = null)
+    {
+        var refreshToken = await _context.RefreshTokens
+            .Include(rt => rt.User)
+            .FirstOrDefaultAsync(rt => rt.Token == token);
+
+        if (refreshToken == null || !refreshToken.IsActive)
+        {
+            _logger.LogWarning("Refresh token invalid or expired: {Token}", token);
+            throw new UnauthorizedAccessException("Invalid or expired refresh token");
+        }
+
+        // Replace old refresh token with new one (rotation)
+        var newRefreshToken = await RotateRefreshToken(refreshToken, ipAddress);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Token refreshed for user: {UserId}", refreshToken.UserId);
+
+        // Set audit context
+        _context.SetAuditContext(refreshToken.UserId, refreshToken.User?.Email, ipAddress);
+
+        // Generate new JWT
+        var jwtToken = GenerateJwtToken(refreshToken.UserId, refreshToken.User?.Email ?? "");
+
+        return new AuthResponseDto(
+            jwtToken,
+            900, // 15 minutes
+            new UserDto(refreshToken.User!.Id, refreshToken.User.Email, refreshToken.User.Name),
+            newRefreshToken.Token
+        );
+    }
+
+    public async Task RevokeTokenAsync(string token, string? ipAddress = null)
+    {
+        var refreshToken = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == token);
+
+        if (refreshToken == null || !refreshToken.IsActive)
+        {
+            _logger.LogWarning("Attempted to revoke invalid or expired token: {Token}", token);
+            throw new InvalidOperationException("Invalid or expired token");
+        }
+
+        // Revoke token
+        refreshToken.RevokedAt = DateTime.UtcNow;
+        refreshToken.RevokedByIp = ipAddress;
+        refreshToken.ReasonRevoked = "Revoked by user";
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Refresh token revoked for user: {UserId}", refreshToken.UserId);
+    }
+
+    private async Task<RefreshToken> GenerateRefreshToken(Guid userId, string? ipAddress)
+    {
+        // Generate a cryptographically secure random token
+        var randomBytes = new byte[64];
+        using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        rng.GetBytes(randomBytes);
+        var token = Convert.ToBase64String(randomBytes);
+
+        var refreshToken = new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Token = token,
+            ExpiresAt = DateTime.UtcNow.AddDays(7), // 7 days
+            CreatedAt = DateTime.UtcNow,
+            CreatedByIp = ipAddress
+        };
+
+        // Remove old refresh tokens for this user (keep only last 5)
+        var oldTokens = await _context.RefreshTokens
+            .Where(rt => rt.UserId == userId)
+            .OrderByDescending(rt => rt.CreatedAt)
+            .Skip(5)
+            .ToListAsync();
+
+        _context.RefreshTokens.RemoveRange(oldTokens);
+        _context.RefreshTokens.Add(refreshToken);
+
+        return refreshToken;
+    }
+
+    private async Task<RefreshToken> RotateRefreshToken(RefreshToken refreshToken, string? ipAddress)
+    {
+        // Generate new refresh token
+        var newRefreshToken = await GenerateRefreshToken(refreshToken.UserId, ipAddress);
+
+        // Revoke old refresh token
+        refreshToken.RevokedAt = DateTime.UtcNow;
+        refreshToken.RevokedByIp = ipAddress;
+        refreshToken.ReplacedByToken = newRefreshToken.Token;
+        refreshToken.ReasonRevoked = "Replaced by new token";
+
+        return newRefreshToken;
     }
 
     public string GenerateJwtToken(Guid userId, string email)

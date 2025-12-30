@@ -29,6 +29,11 @@ out/
 .env.local
 .env.*.local
 
+# Configuration with secrets (keep Template files only)
+appsettings.Development.json
+appsettings.Production.json
+appsettings.Staging.json
+
 # OS files
 .DS_Store
 Thumbs.db

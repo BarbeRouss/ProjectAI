@@ -17,6 +17,19 @@ export default function HouseDetailPage({ params }: { params: Promise<{ id: stri
   const { data: house, isLoading: houseLoading } = useHouse(id);
   const { data: devices, isLoading: devicesLoading } = useDevices(id);
 
+  const getRoleLabel = (role: number) => {
+    switch (role) {
+      case 0:
+        return t('roleOwner');
+      case 1:
+        return t('roleEditor');
+      case 2:
+        return t('roleViewer');
+      default:
+        return String(role);
+    }
+  };
+
   if (houseLoading) {
     return <div className="p-8">{tCommon('loading')}</div>;
   }
@@ -67,7 +80,7 @@ export default function HouseDetailPage({ params }: { params: Promise<{ id: stri
                       </p>
                     </div>
                     <span className="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">
-                      {member.role}
+                      {getRoleLabel(member.role)}
                     </span>
                   </div>
                 ))}

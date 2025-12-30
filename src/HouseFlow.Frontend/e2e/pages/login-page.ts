@@ -14,7 +14,7 @@ export class LoginPage {
     this.passwordInput = page.getByPlaceholder('••••••••');
     this.loginButton = page.getByRole('button', { name: /sign in|se connecter/i });
     this.registerLink = page.getByRole('link', { name: /sign up|s'inscrire/i });
-    this.errorMessage = page.locator('.bg-red-50, .bg-red-900\\/20');
+    this.errorMessage = page.locator('.bg-red-50, [class*="bg-red-900"]');
   }
 
   async goto() {
@@ -22,8 +22,15 @@ export class LoginPage {
   }
 
   async login(email: string, password: string) {
-    await this.emailInput.fill(email);
-    await this.passwordInput.fill(password);
+    // Webkit requires pressSequentially to properly trigger React onChange events
+    await this.emailInput.click();
+    await this.emailInput.pressSequentially(email, { delay: 50 });
+    await expect(this.emailInput).toHaveValue(email);
+
+    await this.passwordInput.click();
+    await this.passwordInput.pressSequentially(password, { delay: 50 });
+    await expect(this.passwordInput).toHaveValue(password);
+
     await this.loginButton.click();
   }
 

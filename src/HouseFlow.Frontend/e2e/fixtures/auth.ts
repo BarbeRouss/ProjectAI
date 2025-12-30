@@ -19,7 +19,7 @@ export const test = base.extend<{
   testUser: async ({}, use) => {
     const user: TestUser = {
       email: generateTestEmail(),
-      password: 'TestPassword123',
+      password: 'TestPassword123!', // Updated to meet new requirements: 12+ chars with special char
       name: 'Test User',
     };
     await use(user);
@@ -27,8 +27,10 @@ export const test = base.extend<{
 
   authenticatedPage: async ({ page, testUser }: { page: Page; testUser: TestUser }, use) => {
     const API_URL = process.env.API_URL || 'http://localhost:5203';
+    const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-    // Register user via API (creates auto-house "Ma Maison")
+    // Register user via API first (creates auto-house "Ma Maison")
+    // Use the page's request context to share cookies
     const registerResponse = await page.request.post(`${API_URL}/v1/auth/register`, {
       data: testUser,
     });
@@ -36,24 +38,27 @@ export const test = base.extend<{
     expect(registerResponse.ok()).toBeTruthy();
     const authData = await registerResponse.json();
 
-    // Store token and user in localStorage
-    await page.goto('http://localhost:3000/fr/login');
-    await page.evaluate((token) => {
-      localStorage.setItem('houseflow_auth_token', token);
-    }, authData.token);
-
-    await page.evaluate((user) => {
-      localStorage.setItem('houseflow_auth_user', JSON.stringify(user));
-    }, authData.user);
-
-    // Navigate to dashboard
-    await page.goto('http://localhost:3000/fr/dashboard');
-
-    // Wait for page to load
+    // Navigate to login page
+    await page.goto(`${FRONTEND_URL}/fr/login`);
     await page.waitForLoadState('domcontentloaded');
 
-    // Users with one house are auto-redirected to /houses/{id}
-    // Wait a bit for the redirect to happen
+    // Inject the auth state into the page BEFORE any React components mount
+    // This ensures the auth context picks up the state correctly
+    await page.addInitScript(({ token, user }) => {
+      // Set user in sessionStorage
+      sessionStorage.setItem('houseflow_auth_user', JSON.stringify(user));
+
+      // Set token in a way that will be picked up when the module loads
+      (window as any).__INITIAL_AUTH_TOKEN = token;
+    }, { token: authData.token, user: authData.user });
+
+    // Now navigate to dashboard - this will initialize the app with auth
+    await page.goto(`${FRONTEND_URL}/fr/dashboard`);
+
+    // Wait for the page to fully load
+    await page.waitForLoadState('networkidle');
+
+    // Verify auth is set by checking if we're still on dashboard (not redirected to login)
     await page.waitForTimeout(1000);
 
     await use(page);

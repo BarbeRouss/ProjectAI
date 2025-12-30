@@ -56,7 +56,10 @@
     "notFound": "House not found",
     "memberCount": "member(s)",
     "loadingDevices": "Loading devices...",
-    "createError": "Failed to create house. Please try again."
+    "createError": "Failed to create house. Please try again.",
+    "roleOwner": "Owner",
+    "roleEditor": "Editor",
+    "roleViewer": "Viewer"
   },
   "devices": {
     "title": "Devices",

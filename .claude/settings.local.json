@@ -41,7 +41,8 @@
       "Bash(powershell -Command \"$timestamp = [DateTimeOffset]::Now.ToUnixTimeSeconds\\(\\); curl.exe -X POST http://localhost:5203/v1/auth/register -H ''Content-Type: application/json'' -d ''{\"\"email\"\":\"\"unique-$timestamp@test.com\"\",\"\"password\"\":\"\"Test123!\"\",\"\"name\"\":\"\"Test User\"\"}'' 2>&1 | Select-String ''error|token|firstHouseId''\")",
       "Bash(tasklist:*)",
       "Bash(taskkill:*)",
-      "Bash(xargs cat:*)"
+      "Bash(xargs cat:*)",
+      "Bash(powershell -Command \"Start-Sleep -Seconds 15\")"
     ]
   }
 }

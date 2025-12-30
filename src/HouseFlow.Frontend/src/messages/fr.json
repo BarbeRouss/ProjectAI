@@ -56,7 +56,10 @@
     "notFound": "Maison non trouvée",
     "memberCount": "membre(s)",
     "loadingDevices": "Chargement des appareils...",
-    "createError": "Échec de la création de la maison. Veuillez réessayer."
+    "createError": "Échec de la création de la maison. Veuillez réessayer.",
+    "roleOwner": "Propriétaire",
+    "roleEditor": "Éditeur",
+    "roleViewer": "Visualiseur"
   },
   "devices": {
     "title": "Appareils",
