@@ -38,6 +38,19 @@ public class HouseFlowDbContext : DbContext
         _currentUserAgent = userAgent;
     }
 
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        base.ConfigureConventions(configurationBuilder);
+
+        // Configure all DateTime properties to be stored as UTC in PostgreSQL
+        // This prevents "Cannot write DateTime with Kind=Unspecified" errors
+        configurationBuilder.Properties<DateTime>()
+            .HaveConversion<UtcDateTimeConverter>();
+
+        configurationBuilder.Properties<DateTime?>()
+            .HaveConversion<UtcNullableDateTimeConverter>();
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -326,5 +339,36 @@ internal class AuditEntry
             NewValues = NewValues.Count == 0 ? null : JsonSerializer.Serialize(NewValues),
             ChangedProperties = ChangedProperties.Count == 0 ? null : JsonSerializer.Serialize(ChangedProperties)
         };
+    }
+}
+
+/// <summary>
+/// Converts DateTime values to UTC for PostgreSQL compatibility
+/// Handles DateTimeKind.Unspecified by treating it as UTC
+/// </summary>
+internal class UtcDateTimeConverter : Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime, DateTime>
+{
+    public UtcDateTimeConverter()
+        : base(
+            v => v.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(v, DateTimeKind.Utc) : v.ToUniversalTime(),
+            v => DateTime.SpecifyKind(v, DateTimeKind.Utc))
+    {
+    }
+}
+
+/// <summary>
+/// Converts nullable DateTime values to UTC for PostgreSQL compatibility
+/// </summary>
+internal class UtcNullableDateTimeConverter : Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime?, DateTime?>
+{
+    public UtcNullableDateTimeConverter()
+        : base(
+            v => v.HasValue
+                ? (v.Value.Kind == DateTimeKind.Unspecified
+                    ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc)
+                    : v.Value.ToUniversalTime())
+                : v,
+            v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v)
+    {
     }
 }
