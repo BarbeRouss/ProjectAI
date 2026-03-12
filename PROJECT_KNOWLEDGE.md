@@ -1,6 +1,6 @@
 # HouseFlow - Project Knowledge Base
 
-**Last Updated**: 2025-12-25
+**Last Updated**: 2026-03-12
 
 ## Project Overview
 
@@ -108,35 +108,32 @@ src/
 **User**
 - Id (Guid)
 - Email (unique)
-- Name
+- FirstName
+- LastName
 - PasswordHash
+- CreatedAt
+- UpdatedAt
 
-**Organization**
-- Id (Guid)
-- Name
-- OwnerId → User
-
-**House**
+**House** (direct user ownership, no Organization layer)
 - Id (Guid)
 - Name (required)
 - Address (optional)
 - ZipCode (optional)
 - City (optional)
-- OrganizationId → Organization
-
-**HouseMember**
-- Id (Guid)
-- HouseId → House
-- UserId → User
-- Role (Owner, Collaborator, Tenant)
-- Status (Pending, Accepted)
+- UserId → User (owner)
+- CreatedAt
+- UpdatedAt
 
 **Device**
 - Id (Guid)
 - Name
 - Type
+- Brand (optional)
+- Model (optional)
 - InstallDate (optional)
 - HouseId → House
+- CreatedAt
+- UpdatedAt
 
 **MaintenanceType**
 - Id (Guid)
@@ -187,6 +184,8 @@ src/
 
 **Usage**:
 ```tsx
+import { useTranslations } from 'next-intl';
+
 const t = useTranslations('namespace');
 const tCommon = useTranslations('common');
 ```
@@ -198,6 +197,24 @@ const tCommon = useTranslations('common');
 - `houses`: title, addHouse, members, notFound, etc.
 - `devices`: title, addDevice, noDevicesYet, createError, etc.
 - `maintenance`: title, logMaintenance, history, etc.
+
+**URL Locale Switching**:
+```
+/fr/dashboard → Français
+/en/dashboard → English
+```
+
+## Dark Mode
+
+Enabled via `next-themes`. Users can toggle between light, dark, and system themes.
+
+**Usage**:
+```tsx
+import { useTheme } from 'next-themes';
+
+const { theme, setTheme } = useTheme();
+setTheme('dark'); // 'light' | 'dark' | 'system'
+```
 
 ## Running the Application
 
@@ -217,6 +234,11 @@ This starts:
 - HouseFlow.API (port 5203)
 - HouseFlow.Frontend (port 3000)
 - Aspire Dashboard (port 15000)
+
+**Default Admin User** (Development only):
+- Email: `admin@admin.com`
+- Password: `admin`
+- Auto-created on first API startup in Development environment
 
 **Manual Mode**:
 ```bash
@@ -244,7 +266,38 @@ npm run test:ui       # Interactive mode
 npm run test:debug    # Debug mode
 ```
 
-**Current Test Status**: 23/70 tests passing (need to fix 47 failing tests)
+**Current Test Status**:
+- Backend: 85 tests passing (7 unit + 78 integration)
+- Frontend E2E: 70 tests passing
+
+## Recent Changes (2026-03-11)
+
+### Backend Stabilization
+1. **Code Review & Fixes**:
+   - Fixed AuthController to return 409 Conflict for duplicate email registration
+   - Fixed DevicesController.GetDeviceMaintenanceTypes missing 403 handler
+   - Added 6 new tests for revoke/logout endpoints
+   - Added tests for Custom periodicity, DTO validation, authorization
+
+2. **MaintenanceCalculatorService Extraction**:
+   - Created `IMaintenanceCalculatorService` interface
+   - Centralized score/status calculation logic from HouseService, DeviceService, MaintenanceService
+   - Methods: CalculateNextDueDate, CalculateMaintenanceTypeStatus, CalculateDeviceScore, CalculateHouseScore
+
+3. **Database Schema Simplification**:
+   - Removed Organizations and HouseMembers tables
+   - Direct User → House ownership (UserId on House)
+   - User: Name split into FirstName + LastName
+   - Device: Metadata replaced with Brand + Model fields
+
+4. **Default Admin User**:
+   - Auto-seeded in Development environment only
+   - Credentials: admin@admin.com / admin
+
+### Test Coverage
+- 85 backend tests passing (7 unit + 78 integration)
+- 70 E2E tests passing
+- Tests use InMemory database (doesn't check migrations)
 
 ## Recent Changes (2025-12-25)
 
@@ -264,10 +317,7 @@ npm run test:debug    # Debug mode
 
 ### Internationalization Fixes
 1. Added missing translation keys to en.json and fr.json
-2. Updated components to use translation keys:
-   - `houses/[id]/page.tsx`: Fixed all hardcoded English
-   - `houses/[id]/devices/new/page.tsx`: Fixed error messages and select options
-   - `dashboard/page.tsx`: Fixed all UI text
+2. Updated components to use translation keys
 3. Eliminated English/French mixing throughout the application
 
 ### Feature Implementations
@@ -278,17 +328,7 @@ npm run test:debug    # Debug mode
 
 ## Known Issues
 
-### Test Failures (47/70 failing)
-1. **Onboarding Tests**: Expect old flow (manual house creation)
-2. **Device Management Tests**: Locale prefix issues causing timeouts
-3. **Maintenance Tests**: Locale prefix issues causing timeouts
-
-**Root Cause**: Tests were written for old flow before:
-- Auto-creation of first house
-- Redirect to device creation
-- Optional address fields
-
-**Fix Required**: Update all E2E tests to match new user flow
+None currently - all tests passing.
 
 ## File Locations
 
@@ -297,18 +337,61 @@ npm run test:debug    # Debug mode
 - Frontend Config: `src/HouseFlow.Frontend/openapi-ts.config.ts`
 - Tailwind Config: `src/HouseFlow.Frontend/tailwind.config.ts`
 - i18n Messages: `src/HouseFlow.Frontend/src/messages/{fr,en}.json`
+- Rider Run Configs: `.idea/.idea.HouseFlow/.idea/runConfigurations/`
 
 ### Key Backend Files
 - Auth Service: `src/HouseFlow.Infrastructure/Services/AuthService.cs`
 - House Service: `src/HouseFlow.Infrastructure/Services/HouseService.cs`
+- Device Service: `src/HouseFlow.Infrastructure/Services/DeviceService.cs`
+- Maintenance Service: `src/HouseFlow.Infrastructure/Services/MaintenanceService.cs`
+- Maintenance Calculator: `src/HouseFlow.Infrastructure/Services/MaintenanceCalculatorService.cs`
 - DTOs: `src/HouseFlow.Application/DTOs/`
 - Entities: `src/HouseFlow.Core/Entities/`
+- Migrations: `src/HouseFlow.Infrastructure/Migrations/`
 
 ### Key Frontend Files
 - API Client: `src/HouseFlow.Frontend/src/lib/api/generated/`
 - Hooks: `src/HouseFlow.Frontend/src/lib/api/hooks/`
 - Pages: `src/HouseFlow.Frontend/src/app/[locale]/(dashboard)/`
 - Styles: `src/HouseFlow.Frontend/src/app/globals.css`
+- Auth Context: `src/HouseFlow.Frontend/src/lib/auth/`
+- Validations: `src/HouseFlow.Frontend/src/lib/validations/`
+
+### Frontend Structure
+```
+src/HouseFlow.Frontend/src/
+├── app/[locale]/          # Next.js App Router with i18n
+│   ├── (auth)/           # Auth pages (login, register)
+│   ├── (dashboard)/      # Protected dashboard pages
+│   └── layout.tsx        # Root layout with providers
+├── components/
+│   ├── ui/               # Shadcn/ui components
+│   ├── providers/        # React context providers
+│   └── ...               # Feature components
+├── lib/
+│   ├── api/              # Generated OpenAPI client + hooks
+│   ├── auth/             # Auth context
+│   ├── i18n/             # Internationalization config
+│   ├── utils/            # Utility functions
+│   └── validations/      # Zod schemas
+└── messages/             # i18n translations (en.json, fr.json)
+
+e2e/
+├── fixtures/             # Playwright fixtures (auth, db)
+├── pages/                # Page Object Models
+└── tests/                # E2E test suites
+```
+
+### Frontend Commands
+```bash
+npm run dev              # Dev server
+npm run build            # Build production
+npm run start            # Start production
+npm run lint             # ESLint
+npm test                 # Tests Playwright
+npm run test:ui          # Tests mode interactif
+npm run generate-client  # Générer client API
+```
 
 ## Environment Variables
 
@@ -353,12 +436,6 @@ NEXT_PUBLIC_API_URL=http://localhost:5203
 
 ## Future Improvements
 
-### Immediate Priorities
-1. Fix all 47 failing E2E tests
-2. Update tests to match new onboarding flow
-3. Test single house auto-redirect
-4. Verify all locale prefixes work correctly
-
 ### Feature Backlog
 1. Email notifications for upcoming maintenance
 2. File attachments for maintenance logs
@@ -375,11 +452,10 @@ NEXT_PUBLIC_API_URL=http://localhost:5203
 
 ## Contact & Resources
 
-- **GitHub**: https://github.com/yourusername/ProjectAI
-- **Documentation**: See `README.md`, `INSTALLATION_GUIDE.md`
-- **Architecture Plan**: `analyse_technique/implementation_plan.md`
-- **User Flows**: `analyse_technique/user_flows.md`
-- **Wireframes**: `analyse_technique/wireframes/`
+- **Quick Start**: `README.md`
+- **Specifications**: `specs/` (requirements, user-stories, architecture, openapi)
+- **Wireframes**: `specs/wireframes/`
+- **Task Management**: `tasks/` (backlog, sprint, archive)
 
 ---
 
