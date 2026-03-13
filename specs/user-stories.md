@@ -168,10 +168,10 @@
 **Afin de** gérer ses entretiens
 
 **Critères d'acceptation:**
-- [ ] Nom, marque, modèle, date installation
-- [ ] Badge indiquant le nombre d'entretiens à faire
-- [ ] Liste des types d'entretien avec statut
-- [ ] Historique des entretiens (timeline)
+- [x] Nom, marque, modèle, date installation
+- [x] Badge indiquant le nombre d'entretiens à faire
+- [x] Liste des types d'entretien avec statut
+- [x] Historique des entretiens (timeline)
 
 **Wireframe:** `device.html`
 
@@ -183,8 +183,8 @@
 **Afin de** comprendre comment configurer les entretiens
 
 **Critères d'acceptation:**
-- [ ] Message explicatif
-- [ ] Bouton pour ajouter un type d'entretien
+- [x] Message explicatif
+- [x] Bouton pour ajouter un type d'entretien
 
 **Wireframe:** `device-empty.html`
 
@@ -196,10 +196,10 @@
 **Afin de** suivre les maintenances périodiques
 
 **Critères d'acceptation:**
-- [ ] Modal avec formulaire
-- [ ] Champs: nom (obligatoire), périodicité
-- [ ] Périodicités: Annuel, Semestriel, Trimestriel, Mensuel
-- [ ] Le type apparaît dans la liste après création
+- [x] Modal avec formulaire
+- [x] Champs: nom (obligatoire), périodicité
+- [x] Périodicités: Annuel, Semestriel, Trimestriel, Mensuel
+- [x] Le type apparaît dans la liste après création
 
 **Wireframe:** `device.html` (modal "Ajouter un type d'entretien")
 
@@ -243,9 +243,9 @@
 **Afin de** corriger ou mettre à jour les données
 
 **Critères d'acceptation:**
-- [ ] Bouton modifier accessible
-- [ ] Formulaire pré-rempli
-- [ ] Sauvegarde des modifications
+- [x] Bouton modifier accessible
+- [x] Formulaire pré-rempli
+- [x] Sauvegarde des modifications
 
 ---
 
@@ -255,9 +255,9 @@
 **Afin de** retirer un équipement que je ne possède plus
 
 **Critères d'acceptation:**
-- [ ] Confirmation avant suppression
-- [ ] Suppression en cascade (types, instances)
-- [ ] Redirection vers la maison
+- [x] Confirmation avant suppression
+- [x] Suppression en cascade (types, instances)
+- [x] Redirection vers la maison
 
 ---
 

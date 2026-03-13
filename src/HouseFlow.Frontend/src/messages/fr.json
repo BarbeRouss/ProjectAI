@@ -83,7 +83,8 @@
     "noDevicesDescription": "Ajoutez votre premier appareil pour commencer le suivi",
     "createError": "Échec de la création de l'appareil. Veuillez réessayer.",
     "maintenanceTypes": "Types d'entretien",
-    "addType": "Ajouter"
+    "addType": "Ajouter",
+    "deleteConfirmation": "Êtes-vous sûr de vouloir supprimer « {name} » ? Tous les types d'entretien et l'historique seront supprimés. Cette action est irréversible."
   },
   "maintenance": {
     "title": "Entretien",

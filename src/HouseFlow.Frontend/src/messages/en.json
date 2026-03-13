@@ -83,7 +83,8 @@
     "noDevicesDescription": "Add your first device to start tracking maintenance",
     "createError": "Failed to create device. Please try again.",
     "maintenanceTypes": "Maintenance Types",
-    "addType": "Add Type"
+    "addType": "Add Type",
+    "deleteConfirmation": "Are you sure you want to delete \"{name}\"? All maintenance types and history will be deleted. This action cannot be undone."
   },
   "maintenance": {
     "title": "Maintenance",
