@@ -92,7 +92,7 @@ export function useCreateMaintenanceType(
       return response.data;
     },
     ...options,
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, onMutateResult, context) => {
       // First invalidate queries and wait for refetch
       await queryClient.invalidateQueries({
         queryKey: ['devices', deviceId, 'maintenance-types'],
@@ -103,7 +103,7 @@ export function useCreateMaintenanceType(
         refetchType: 'active'
       });
       // Then call user's onSuccess if provided
-      await options?.onSuccess?.(data, variables, context);
+      await options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 }
@@ -235,7 +235,7 @@ export function useLogMaintenance(
       return response.data;
     },
     ...options,
-    onSuccess: async (data, variables, context) => {
+    onSuccess: async (data, variables, onMutateResult, context) => {
       // First invalidate queries and wait for refetch
       await queryClient.invalidateQueries({
         queryKey: ['devices'],
@@ -250,7 +250,7 @@ export function useLogMaintenance(
         refetchType: 'active'
       });
       // Then call user's onSuccess if provided
-      await options?.onSuccess?.(data, variables, context);
+      await options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 }
