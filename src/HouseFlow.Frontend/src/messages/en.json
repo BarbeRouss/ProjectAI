@@ -64,7 +64,8 @@
     "createError": "Failed to create house. Please try again.",
     "roleOwner": "Owner",
     "roleEditor": "Editor",
-    "roleViewer": "Viewer"
+    "roleViewer": "Viewer",
+    "deleteConfirmation": "Are you sure you want to delete \"{name}\"? This will delete all associated devices and maintenance records. This action cannot be undone."
   },
   "devices": {
     "title": "Devices",

@@ -115,8 +115,8 @@
 **Afin de** comprendre comment ajouter des appareils
 
 **Critères d'acceptation:**
-- [ ] Message explicatif
-- [ ] Bouton pour ajouter un appareil
+- [x] Message explicatif
+- [x] Bouton pour ajouter un appareil
 
 **Wireframe:** `house-empty.html`
 
@@ -128,9 +128,9 @@
 **Afin de** suivre son entretien
 
 **Critères d'acceptation:**
-- [ ] Formulaire avec nom, type, marque, modèle, date installation
-- [ ] Type sélectionnable (Chauffage, Climatisation, Électroménager, etc.)
-- [ ] L'appareil apparaît dans la liste après création
+- [x] Formulaire avec nom, type, marque, modèle, date installation
+- [x] Type sélectionnable (Chauffage, Climatisation, Électroménager, etc.)
+- [x] L'appareil apparaît dans la liste après création
 
 **Wireframe:** `house.html` (bouton ajouter)
 
@@ -142,9 +142,9 @@
 **Afin de** corriger ou mettre à jour les données
 
 **Critères d'acceptation:**
-- [ ] Bouton modifier accessible
-- [ ] Formulaire pré-rempli
-- [ ] Sauvegarde des modifications
+- [x] Bouton modifier accessible
+- [x] Formulaire pré-rempli
+- [x] Sauvegarde des modifications
 
 ---
 
@@ -154,9 +154,9 @@
 **Afin de** retirer une propriété que je ne gère plus
 
 **Critères d'acceptation:**
-- [ ] Confirmation avant suppression
-- [ ] Suppression en cascade (appareils, types, instances)
-- [ ] Redirection vers dashboard
+- [x] Confirmation avant suppression
+- [x] Suppression en cascade (appareils, types, instances)
+- [x] Redirection vers dashboard
 
 ---
 
