@@ -43,8 +43,8 @@ builder.Services.AddControllers()
 // Database
 if (builder.Environment.EnvironmentName == "Testing")
 {
-    builder.Services.AddDbContext<HouseFlowDbContext>(options =>
-        options.UseInMemoryDatabase("InMemoryTestDb"));
+    // Connection provided by Testcontainers via CustomWebApplicationFactory
+    // DbContext is registered there — nothing to do here
 }
 else if (builder.Environment.EnvironmentName == "CI")
 {
@@ -206,54 +206,41 @@ if (!builder.Environment.IsDevelopment() && builder.Environment.EnvironmentName 
 
 var app = builder.Build();
 
-// Apply pending migrations automatically (Development + Production)
-// Skip for Testing environment (uses InMemory database which doesn't support migrations)
-if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
+// Apply pending migrations automatically
 {
-    using (var scope = app.Services.CreateScope())
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<HouseFlowDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    try
     {
-        var dbContext = scope.ServiceProvider.GetRequiredService<HouseFlowDbContext>();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-
-        try
-        {
-            dbContext.Database.Migrate();
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "An error occurred while migrating the database.");
-            throw;
-        }
-
-        // Seed default admin user (Development only - NOT for production)
-        if (app.Environment.IsDevelopment())
-        {
-            const string adminEmail = "admin@admin.com";
-            if (!dbContext.Users.Any(u => u.Email == adminEmail))
-            {
-                var adminUser = new User
-                {
-                    Id = Guid.NewGuid(),
-                    Email = adminEmail,
-                    PasswordHash = BCryptNet.HashPassword("admin"),
-                    FirstName = "Admin",
-                    LastName = "User",
-                    CreatedAt = DateTime.UtcNow
-                };
-                dbContext.Users.Add(adminUser);
-                dbContext.SaveChanges();
-                logger.LogInformation("Default admin user created: {Email}", adminEmail);
-            }
-        }
+        dbContext.Database.Migrate();
     }
-}
-else if (app.Environment.EnvironmentName == "Testing")
-{
-    // For Testing environment with InMemory database, just ensure database is created
-    using (var scope = app.Services.CreateScope())
+    catch (Exception ex)
     {
-        var dbContext = scope.ServiceProvider.GetRequiredService<HouseFlowDbContext>();
-        dbContext.Database.EnsureCreated();
+        logger.LogError(ex, "An error occurred while migrating the database.");
+        throw;
+    }
+
+    // Seed default admin user (Development only - NOT for production)
+    if (app.Environment.IsDevelopment())
+    {
+        const string adminEmail = "admin@admin.com";
+        if (!dbContext.Users.Any(u => u.Email == adminEmail))
+        {
+            var adminUser = new User
+            {
+                Id = Guid.NewGuid(),
+                Email = adminEmail,
+                PasswordHash = BCryptNet.HashPassword("admin"),
+                FirstName = "Admin",
+                LastName = "User",
+                CreatedAt = DateTime.UtcNow
+            };
+            dbContext.Users.Add(adminUser);
+            dbContext.SaveChanges();
+            logger.LogInformation("Default admin user created: {Email}", adminEmail);
+        }
     }
 }
 
