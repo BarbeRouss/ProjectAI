@@ -140,9 +140,9 @@ jobs:
 
       - name: Wait for Aspire App to be ready
         run: |
-          echo "Waiting for API (localhost:5203)..."
-          timeout 120 bash -c 'until curl -sf http://localhost:5203/api/v1/maintenance-types > /dev/null 2>&1; do sleep 2; done'
-          echo "API is ready."
+          echo "Waiting for API health check (localhost:5203/health)..."
+          timeout 120 bash -c 'until curl -sf http://localhost:5203/health > /dev/null 2>&1; do sleep 2; done'
+          echo "API is healthy."
           echo "Waiting for Frontend (localhost:3000)..."
           timeout 120 bash -c 'until curl -sf http://localhost:3000 > /dev/null 2>&1; do sleep 2; done'
           echo "Frontend is ready."
