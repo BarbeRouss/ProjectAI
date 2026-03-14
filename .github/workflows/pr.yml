@@ -85,20 +85,6 @@ jobs:
     timeout-minutes: 20
     needs: [backend-tests, frontend-checks]
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: houseflow
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -135,7 +121,7 @@ jobs:
 
       - name: Start Aspire App (background)
         run: |
-          dotnet run --project src/HouseFlow.AppHost &
+          dotnet run --project src/HouseFlow.AppHost > /tmp/aspire-apphost.log 2>&1 &
           echo $! > aspire.pid
 
       - name: Wait for Aspire App to be ready
@@ -146,6 +132,19 @@ jobs:
           echo "Waiting for Frontend (localhost:3000)..."
           timeout 120 bash -c 'until curl -sf http://localhost:3000 > /dev/null 2>&1; do sleep 2; done'
           echo "Frontend is ready."
+
+      - name: Debug Aspire App (on failure)
+        if: failure()
+        run: |
+          echo "=== Docker containers ==="
+          docker ps -a
+          echo "=== Listening ports ==="
+          ss -tlnp
+          echo "=== Aspire AppHost logs (last 50 lines) ==="
+          tail -50 /tmp/aspire-apphost.log 2>/dev/null || echo "No log file found"
+          echo "=== Try curl on common ports ==="
+          curl -v http://localhost:5203/health 2>&1 || true
+          curl -v http://localhost:5000/health 2>&1 || true
 
       - name: Run Playwright tests
         working-directory: src/HouseFlow.Frontend
