@@ -153,6 +153,11 @@ jobs:
         run: |
           dotnet run --project src/HouseFlow.API --no-build > /tmp/api.log 2>&1 &
           echo $! > api.pid
+          sleep 5
+          echo "=== API startup logs ==="
+          cat /tmp/api.log
+          echo "=== API process check ==="
+          ps -p $(cat api.pid) || echo "::warning::API process died"
 
       - name: Start Frontend (background)
         working-directory: src/HouseFlow.Frontend
