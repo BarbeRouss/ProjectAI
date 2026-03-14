@@ -8,8 +8,10 @@
 | Orchestration | Aspire Docker Compose Publisher |
 | Reverse proxy | Traefik (géré séparément, hors projet) |
 | Accès | Exposé sur internet (domaine géré par l'utilisateur) |
-| CI/CD | GitHub Actions → build images → push GHCR → SSH deploy |
+| CI/CD | GitHub Actions → build → GHCR → preprod auto → approval → prod |
 | Registry | GitHub Container Registry (ghcr.io) |
+| Versioning | CalVer (YYYY.MM.DD[-N]) |
+| Environnements | Preprod (auto) + Prod (approval GitHub) |
 | Backups | PostgreSQL dumps quotidiens + rétention 7j |
 | Monitoring | Aspire Dashboard (premier temps) |
 
@@ -18,16 +20,46 @@
 ## Architecture cible
 
 ```
-Internet → Traefik (géré séparément)
-              ├── app.{domaine}  → Frontend (:3000)
-              └── api.{domaine}  → API (:8080)
-
 VM Proxmox (Docker)
-└── Docker Compose (généré par Aspire)
-    ├── houseflow-api     (image depuis ghcr.io)
-    ├── houseflow-web     (image depuis ghcr.io)
-    └── postgres          (image officielle)
+│
+├── preprod/
+│   ├── houseflow-api      (ghcr.io/…/api:2026.03.14)
+│   ├── houseflow-web      (ghcr.io/…/web:2026.03.14)
+│   └── postgres-preprod   (copie de la DB prod à chaque deploy)
+│
+└── prod/
+    ├── houseflow-api      (ghcr.io/…/api:2026.03.14)
+    ├── houseflow-web      (ghcr.io/…/web:2026.03.14)
+    └── postgres           (données persistantes)
+
+Internet → Traefik (géré séparément)
+              ├── app.{domaine}          → prod web     (:3000)
+              ├── api.{domaine}          → prod api     (:8080)
+              ├── preprod.{domaine}      → preprod web  (:3100)
+              └── api-preprod.{domaine}  → preprod api  (:8180)
 ```
+
+---
+
+## Versioning — CalVer
+
+Format : `YYYY.MM.DD` avec suffixe `-N` si plusieurs releases le même jour.
+
+```
+2026.03.14      ← première release du 14 mars
+2026.03.14-2    ← deuxième release du même jour
+2026.03.15      ← lendemain
+```
+
+**Tags d'images GHCR :**
+```
+ghcr.io/barberouss/houseflow-api:2026.03.14
+ghcr.io/barberouss/houseflow-api:latest
+ghcr.io/barberouss/houseflow-web:2026.03.14
+ghcr.io/barberouss/houseflow-web:latest
+```
+
+Le tag CalVer est calculé automatiquement dans le CI à partir de la date + compteur.
 
 ---
 
@@ -37,21 +69,69 @@ VM Proxmox (Docker)
 Push sur main
      │
      ▼
-GitHub Actions
-     ├── 1. aspire publish → génère docker-compose.yaml + .env
-     ├── 2. docker build   → build images API + Frontend
-     ├── 3. docker push    → push vers ghcr.io/barberouss/houseflow-*
-     └── 4. SSH deploy     → pull images + docker compose up -d
+┌─ Build ──────────────────────────────┐
+│  1. aspire publish                   │
+│  2. docker build (API + Frontend)    │
+│  3. Tag CalVer (2026.03.14)          │
+│  4. Push GHCR                        │
+└──────────────┬───────────────────────┘
+               │
+               ▼
+┌─ Deploy Preprod (auto) ─────────────────────┐
+│  1. SSH dans la VM                          │
+│  2. Dump DB prod → restore dans preprod     │
+│  3. Pull images CalVer                      │
+│  4. docker compose -f preprod up -d         │
+│  5. Health check                            │
+└──────────────┬──────────────────────────────┘
+               │
+               ▼
+┌─ Approval (GitHub Environment) ─────┐
+│  Reviewer approuve dans GitHub UI   │
+│  (environment: production)          │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─ Deploy Prod ───────────────────────┐
+│  1. SSH dans la VM                  │
+│  2. Pull mêmes images CalVer       │
+│  3. docker compose -f prod up -d   │
+│  4. Health check                   │
+└─────────────────────────────────────┘
 ```
 
-### Artefacts
+### GitHub Environments à configurer
 
-| Artefact | Stockage | Format |
-|----------|----------|--------|
-| Image API | `ghcr.io/barberouss/houseflow-api:latest` | Container image (.NET 10, buildé par SDK) |
-| Image Frontend | `ghcr.io/barberouss/houseflow-web:latest` | Container image (Node 22 Alpine) |
-| docker-compose.yaml | Généré par `aspire publish` dans le repo | YAML paramétrisé |
-| .env | Sur la VM uniquement (secrets) | Variables d'environnement |
+| Environment | Protection | Reviewers |
+|-------------|-----------|-----------|
+| `preprod` | Aucune (auto-deploy) | — |
+| `production` | Required reviewers | Toi |
+
+---
+
+## Structure sur la VM
+
+```
+/opt/houseflow/
+├── prod/
+│   ├── docker-compose.yaml     (généré par Aspire, images :latest)
+│   └── .env                    (secrets prod)
+├── preprod/
+│   ├── docker-compose.yaml     (variante avec ports décalés)
+│   └── .env                    (secrets preprod, pointe vers DB preprod)
+└── scripts/
+    ├── backup.sh               (dump quotidien DB prod)
+    ├── sync-db-to-preprod.sh   (copie DB prod → preprod)
+    └── deploy.sh               (helper commun)
+```
+
+### Ports (internes, Traefik route par domaine)
+
+| Service | Prod | Preprod |
+|---------|------|---------|
+| API | 8080 | 8180 |
+| Frontend | 3000 | 3100 |
+| PostgreSQL | 5432 | 5433 |
 
 ---
 
@@ -59,13 +139,12 @@ GitHub Actions
 
 ### 1. Package Aspire Docker Compose
 
-Ajouter `Aspire.Hosting.Docker` au AppHost et configurer le publisher :
+Ajouter `Aspire.Hosting.Docker` au AppHost :
 
 ```csharp
 // src/HouseFlow.AppHost/Program.cs
 var builder = DistributedApplication.CreateBuilder(args);
 
-// Ajouter l'environnement Docker Compose pour le publish
 builder.AddDockerComposeEnvironment("houseflow");
 
 var postgres = builder.AddPostgres("postgres")
@@ -93,8 +172,6 @@ builder.Build().Run();
 ### 2. Dockerfile Frontend (seul Dockerfile nécessaire)
 
 **Fichier :** `src/HouseFlow.Frontend/Dockerfile`
-
-L'API n'a pas besoin de Dockerfile — le SDK .NET build l'image container nativement via `aspire publish`.
 
 ```dockerfile
 FROM node:22-alpine AS deps
@@ -127,8 +204,6 @@ CMD ["npm", "start"]
 
 #### 3a. API Program.cs — Support Production sans Aspire orchestrator
 
-Le `else` block actuel utilise `builder.AddNpgsqlDbContext` (Aspire runtime). En production Docker, Aspire a généré le compose mais ne tourne pas comme orchestrateur. Il faut un chemin "Production" avec connection string standard.
-
 ```csharp
 else if (builder.Environment.IsProduction())
 {
@@ -146,8 +221,6 @@ else
 ```
 
 #### 3b. API Program.cs — CORS dynamique
-
-Remplacer les origines CORS hardcodées par une variable d'environnement :
 
 ```csharp
 var corsOrigins = Environment.GetEnvironmentVariable("CORS__Origins")?.Split(',')
@@ -167,8 +240,6 @@ builder.Services.AddCors(options =>
 
 #### 3c. API Program.cs — Migrations automatiques en Production
 
-Safe pour une app single-instance. Sans le seed admin (Development only).
-
 ```csharp
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
@@ -176,8 +247,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     var dbContext = scope.ServiceProvider.GetRequiredService<HouseFlowDbContext>();
     dbContext.Database.Migrate();
 
-    // Seed admin uniquement en Development
-    if (app.Environment.IsDevelopment()) { /* seed existant */ }
+    if (app.Environment.IsDevelopment()) { /* seed admin existant */ }
 }
 ```
 
@@ -192,18 +262,40 @@ on:
   push:
     branches: [main]
 
+env:
+  REGISTRY: ghcr.io
+  API_IMAGE: ghcr.io/${{ github.repository_owner }}/houseflow-api
+  WEB_IMAGE: ghcr.io/${{ github.repository_owner }}/houseflow-web
+
 jobs:
-  build-and-deploy:
-    name: Build, Push & Deploy
+  # ── Job 1: Build & Push ──────────────────────────
+  build:
+    name: Build & Push Images
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
       packages: write
+    outputs:
+      version: ${{ steps.version.outputs.tag }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Generate CalVer tag
+        id: version
+        run: |
+          BASE_TAG=$(date +%Y.%m.%d)
+          # Check if tag already exists, append counter if so
+          COUNTER=1
+          TAG=$BASE_TAG
+          while git tag -l "$TAG" | grep -q .; do
+            COUNTER=$((COUNTER + 1))
+            TAG="${BASE_TAG}-${COUNTER}"
+          done
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Version: $TAG"
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -221,53 +313,137 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish Aspire app
-        run: |
-          dotnet run --project src/HouseFlow.AppHost -- publish
+        run: dotnet run --project src/HouseFlow.AppHost -- publish
 
-      - name: Tag & push images to GHCR
+      - name: Tag & push images
         run: |
-          docker tag houseflow-api:latest ghcr.io/${{ github.repository_owner }}/houseflow-api:latest
-          docker tag houseflow-web:latest ghcr.io/${{ github.repository_owner }}/houseflow-web:latest
-          docker push ghcr.io/${{ github.repository_owner }}/houseflow-api:latest
-          docker push ghcr.io/${{ github.repository_owner }}/houseflow-web:latest
+          VERSION=${{ steps.version.outputs.tag }}
 
-      - name: Deploy via SSH
+          # API
+          docker tag houseflow-api:latest ${{ env.API_IMAGE }}:${VERSION}
+          docker tag houseflow-api:latest ${{ env.API_IMAGE }}:latest
+          docker push ${{ env.API_IMAGE }}:${VERSION}
+          docker push ${{ env.API_IMAGE }}:latest
+
+          # Frontend
+          docker tag houseflow-web:latest ${{ env.WEB_IMAGE }}:${VERSION}
+          docker tag houseflow-web:latest ${{ env.WEB_IMAGE }}:latest
+          docker push ${{ env.WEB_IMAGE }}:${VERSION}
+          docker push ${{ env.WEB_IMAGE }}:latest
+
+      - name: Create git tag
+        run: |
+          git tag ${{ steps.version.outputs.tag }}
+          git push origin ${{ steps.version.outputs.tag }}
+
+  # ── Job 2: Deploy Preprod (auto) ─────────────────
+  deploy-preprod:
+    name: Deploy Preprod
+    needs: build
+    runs-on: ubuntu-latest
+    environment: preprod
+    timeout-minutes: 10
+
+    steps:
+      - name: Deploy preprod via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
-            cd /opt/houseflow
+            set -e
+            VERSION=${{ needs.build.outputs.version }}
 
-            # Login GHCR
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            # 1. Sync prod DB to preprod
+            /opt/houseflow/scripts/sync-db-to-preprod.sh
 
-            # Pull latest images
+            # 2. Pull new images
+            cd /opt/houseflow/preprod
+            export IMAGE_TAG=${VERSION}
             docker compose pull
 
-            # Restart with new images
+            # 3. Restart preprod
             docker compose up -d
 
-            # Cleanup old images
+            # 4. Health check
+            sleep 5
+            curl -f http://localhost:8180/alive || exit 1
+
+            echo "Preprod deployed: ${VERSION}"
+
+  # ── Job 3: Deploy Prod (manual approval) ─────────
+  deploy-prod:
+    name: Deploy Production
+    needs: [build, deploy-preprod]
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 10
+
+    steps:
+      - name: Deploy prod via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            VERSION=${{ needs.build.outputs.version }}
+
+            # 1. Pull new images
+            cd /opt/houseflow/prod
+            export IMAGE_TAG=${VERSION}
+            docker compose pull
+
+            # 2. Restart prod
+            docker compose up -d
+
+            # 3. Health check
+            sleep 5
+            curl -f http://localhost:8080/alive || exit 1
+
+            # 4. Cleanup old images
             docker image prune -f
+
+            echo "Production deployed: ${VERSION}"
 ```
 
-### 5. Docker Compose sur la VM
+### 5. Script sync DB prod → preprod
 
-Le fichier `docker-compose.yaml` est généré par `aspire publish` et commité dans le repo. Sur la VM, un `.env` local contient les secrets :
+**Fichier :** `scripts/sync-db-to-preprod.sh`
 
-```env
-# /opt/houseflow/.env (sur la VM uniquement, jamais commité)
-DB_USER=houseflow
-DB_PASSWORD=<strong-password>
-JWT_KEY=<minimum-32-chars-secret>
-JWT_ISSUER=https://api.example.com
-JWT_AUDIENCE=https://app.example.com
-CORS_ORIGINS=https://app.example.com
+```bash
+#!/bin/bash
+set -e
+
+# Copie la DB de production vers preprod
+# Utilisé avant chaque déploiement preprod
+
+PROD_COMPOSE="/opt/houseflow/prod/docker-compose.yaml"
+PREPROD_COMPOSE="/opt/houseflow/preprod/docker-compose.yaml"
+
+echo "[$(date)] Syncing prod DB to preprod..."
+
+# 1. Dump prod
+docker compose -f "$PROD_COMPOSE" exec -T postgres \
+  pg_dump -U "$DB_USER" -Fc houseflow > /tmp/houseflow_prod.dump
+
+# 2. Drop & restore in preprod
+docker compose -f "$PREPROD_COMPOSE" exec -T postgres \
+  dropdb -U "$DB_USER" --if-exists houseflow
+
+docker compose -f "$PREPROD_COMPOSE" exec -T postgres \
+  createdb -U "$DB_USER" houseflow
+
+docker compose -f "$PREPROD_COMPOSE" exec -T postgres \
+  pg_restore -U "$DB_USER" -d houseflow --no-owner < /tmp/houseflow_prod.dump
+
+# 3. Cleanup
+rm -f /tmp/houseflow_prod.dump
+
+echo "[$(date)] DB sync complete."
 ```
-
-Le compose généré par Aspire référence les images GHCR et utilise les variables du `.env`.
 
 ### 6. Script de backup
 
@@ -275,65 +451,73 @@ Le compose généré par Aspire référence les images GHCR et utilise les varia
 
 ```bash
 #!/bin/bash
+set -e
+
 # PostgreSQL daily backup with 7-day retention
 BACKUP_DIR="/opt/houseflow/backups"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 RETENTION_DAYS=7
+PROD_COMPOSE="/opt/houseflow/prod/docker-compose.yaml"
 
 mkdir -p "$BACKUP_DIR"
 
-# Dump via docker compose
-docker compose -f /opt/houseflow/docker-compose.yaml exec -T postgres \
-  pg_dump -U "$DB_USER" houseflow | gzip > "$BACKUP_DIR/houseflow_$TIMESTAMP.sql.gz"
+# Dump prod DB
+docker compose -f "$PROD_COMPOSE" exec -T postgres \
+  pg_dump -U "$DB_USER" -Fc houseflow > "$BACKUP_DIR/houseflow_$TIMESTAMP.dump"
+
+# Compress
+gzip "$BACKUP_DIR/houseflow_$TIMESTAMP.dump"
 
 # Cleanup old backups
-find "$BACKUP_DIR" -name "*.sql.gz" -mtime +$RETENTION_DAYS -delete
+find "$BACKUP_DIR" -name "*.dump.gz" -mtime +$RETENTION_DAYS -delete
 
-echo "[$(date)] Backup completed: houseflow_$TIMESTAMP.sql.gz"
+echo "[$(date)] Backup completed: houseflow_$TIMESTAMP.dump.gz"
 ```
 
 Cron : `0 3 * * * /opt/houseflow/scripts/backup.sh >> /var/log/houseflow-backup.log 2>&1`
 
 ### 7. .env.example
 
-**Fichier :** `.env.example` (commité, pour documenter les variables nécessaires)
+**Fichier :** `.env.example`
 
 ```env
-# Database
+# ── Commun ──
 DB_USER=houseflow
 DB_PASSWORD=CHANGE_ME
 
 # JWT (minimum 32 characters)
 JWT_KEY=CHANGE_ME_MINIMUM_32_CHARS_SECRET_KEY
-JWT_ISSUER=https://api.yourdomain.com
-JWT_AUDIENCE=https://app.yourdomain.com
 
-# CORS
-CORS_ORIGINS=https://app.yourdomain.com
-
-# GHCR (pour docker compose pull)
+# GHCR
 GHCR_TOKEN=ghp_xxx
+
+# ── Prod (.env dans /opt/houseflow/prod/) ──
+# JWT_ISSUER=https://api.yourdomain.com
+# JWT_AUDIENCE=https://app.yourdomain.com
+# CORS_ORIGINS=https://app.yourdomain.com
+# IMAGE_TAG=latest
+
+# ── Preprod (.env dans /opt/houseflow/preprod/) ──
+# JWT_ISSUER=https://api-preprod.yourdomain.com
+# JWT_AUDIENCE=https://preprod.yourdomain.com
+# CORS_ORIGINS=https://preprod.yourdomain.com
+# IMAGE_TAG=latest
 ```
 
 ### 8. Documentation setup VM
 
 **Fichier :** `docs/deployment.md`
 
-Guide minimal :
+Guide :
 1. Créer VM Debian 12 sur Proxmox (2 CPU, 4GB RAM, 40GB disk)
 2. Installer Docker + Docker Compose
-3. Cloner le repo dans `/opt/houseflow`
-4. Copier `.env.example` → `.env` et configurer les secrets
-5. `docker compose up -d`
-6. Configurer Traefik (séparément) pour router vers les ports exposés
+3. Créer structure `/opt/houseflow/{prod,preprod,scripts,backups}`
+4. Configurer `.env` dans prod/ et preprod/ (secrets différents si besoin)
+5. Premier déploiement : `docker compose up -d` dans prod/ puis preprod/
+6. Configurer Traefik (séparément) pour router vers les bons ports
 7. Configurer le cron backup
-8. Ajouter les secrets GitHub pour le CI/CD
-
-**Secrets GitHub nécessaires :**
-- `DEPLOY_HOST` : IP publique ou DDNS de la VM
-- `DEPLOY_USER` : utilisateur SSH sur la VM
-- `DEPLOY_SSH_KEY` : clé privée SSH
-- `GHCR_TOKEN` : token pour pull les images sur la VM
+8. Configurer GitHub Environments (preprod: auto, production: required reviewer)
+9. Ajouter les secrets GitHub : `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`
 
 ---
 
@@ -344,12 +528,13 @@ Guide minimal :
 | Créer | `src/HouseFlow.Frontend/Dockerfile` |
 | Créer | `src/HouseFlow.Frontend/.dockerignore` |
 | Créer | `scripts/backup.sh` |
+| Créer | `scripts/sync-db-to-preprod.sh` |
 | Créer | `docs/deployment.md` |
 | Créer | `.env.example` |
 | Modifier | `src/HouseFlow.AppHost/Program.cs` (ajouter Docker Compose publisher) |
 | Modifier | `src/HouseFlow.AppHost/HouseFlow.AppHost.csproj` (package Aspire.Hosting.Docker) |
 | Modifier | `src/HouseFlow.API/Program.cs` (Production DB + CORS + migrations) |
-| Modifier | `.github/workflows/deploy.yml` (pipeline complet) |
+| Modifier | `.github/workflows/deploy.yml` (pipeline complet 3 jobs) |
 | Modifier | `specs/user-stories.md` (ajouter US-060) |
 
 ---
@@ -360,8 +545,8 @@ Guide minimal :
 2. **AppHost** — Ajouter Aspire.Hosting.Docker + configurer publisher
 3. **Dockerfile Frontend** — Seul Dockerfile nécessaire
 4. **Adaptations Program.cs** — Production mode, CORS dynamique, migrations
-5. **CI/CD** — deploy.yml avec build → GHCR → SSH deploy
-6. **Backups** — Script + doc cron
+5. **CI/CD** — deploy.yml avec 3 jobs (build → preprod → approval → prod)
+6. **Scripts** — backup.sh + sync-db-to-preprod.sh
 7. **Documentation** — Guide setup VM + .env.example
 8. **Test** — `aspire publish` local pour valider la génération
 
@@ -371,6 +556,7 @@ Guide minimal :
 
 Ce setup est conçu pour être portable :
 - Les images GHCR sont déjà prêtes pour Azure Container Apps
-- Le compose généré par Aspire peut être remplacé par un publish Azure (`aspire publish --publisher azure`)
+- Le compose généré par Aspire peut être remplacé par `aspire publish --publisher azure`
 - Les secrets `.env` migrent vers Azure Key Vault
 - La DB PostgreSQL migre vers Azure Database for PostgreSQL
+- Le pipeline CalVer reste identique
