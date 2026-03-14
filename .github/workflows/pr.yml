@@ -152,23 +152,35 @@ jobs:
       - name: Wait for services to be ready
         run: |
           echo "Waiting for API health check (localhost:5203/health)..."
-          timeout 60 bash -c 'until curl -sf http://localhost:5203/health > /dev/null 2>&1; do sleep 2; done'
-          echo "API is healthy."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:5203/health > /dev/null 2>&1; then
+              echo "API is healthy after ${i} attempts."
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "::error::API failed to start within 60s"
+              echo "=== API logs ==="
+              cat /tmp/api.log 2>/dev/null || echo "No API log"
+              echo "=== Listening ports ==="
+              ss -tlnp
+              exit 1
+            fi
+            sleep 2
+          done
           echo "Waiting for Frontend (localhost:3000)..."
-          timeout 60 bash -c 'until curl -sf http://localhost:3000 > /dev/null 2>&1; do sleep 2; done'
-          echo "Frontend is ready."
-
-      - name: Debug services (on failure)
-        if: failure()
-        run: |
-          echo "=== Listening ports ==="
-          ss -tlnp
-          echo "=== API logs (last 30 lines) ==="
-          tail -30 /tmp/api.log 2>/dev/null || echo "No API log"
-          echo "=== Frontend logs (last 30 lines) ==="
-          tail -30 /tmp/frontend.log 2>/dev/null || echo "No frontend log"
-          echo "=== Curl API ==="
-          curl -v http://localhost:5203/health 2>&1 || true
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000 > /dev/null 2>&1; then
+              echo "Frontend is ready after ${i} attempts."
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "::error::Frontend failed to start within 60s"
+              echo "=== Frontend logs ==="
+              cat /tmp/frontend.log 2>/dev/null || echo "No frontend log"
+              exit 1
+            fi
+            sleep 2
+          done
 
       - name: Run Playwright tests
         working-directory: src/HouseFlow.Frontend
