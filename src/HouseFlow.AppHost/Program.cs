@@ -19,11 +19,10 @@ var api = builder.AddProject("api", "../HouseFlow.API/HouseFlow.API.csproj")
     .WithExternalHttpEndpoints();
 
 // Add the Frontend (Next.js) with API reference
-var frontend = builder.AddNpmApp("frontend", "../HouseFlow.Frontend", "dev")
+var frontend = builder.AddJavaScriptApp("frontend", "../HouseFlow.Frontend")
     .WithReference(api)
     .WaitFor(api)
     .WithHttpEndpoint(port: 3000, env: "PORT")
-    .WithExternalHttpEndpoints()
-    .PublishAsDockerFile();
+    .WithExternalHttpEndpoints();
 
 builder.Build().Run();
