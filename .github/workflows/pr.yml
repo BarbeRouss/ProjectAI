@@ -175,10 +175,17 @@ jobs:
             fi
             if [ $i -eq 30 ]; then
               echo "::error::API failed to start within 60s"
-              echo "--- API LOGS ---"
-              cat /tmp/api.log 2>/dev/null || echo "No API log"
-              echo "--- PORTS ---"
-              ss -tlnp
+              echo "## E2E Debug - API failed to start" >> "$GITHUB_STEP_SUMMARY"
+              echo "" >> "$GITHUB_STEP_SUMMARY"
+              echo "### API Logs" >> "$GITHUB_STEP_SUMMARY"
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
+              cat /tmp/api.log >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "No API log" >> "$GITHUB_STEP_SUMMARY"
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
+              echo "" >> "$GITHUB_STEP_SUMMARY"
+              echo "### Listening Ports" >> "$GITHUB_STEP_SUMMARY"
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
+              ss -tlnp >> "$GITHUB_STEP_SUMMARY"
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
               exit 1
             fi
             sleep 2
