@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # PostgreSQL daily backup with 7-day retention
-# Cron: 0 3 * * * /opt/houseflow/scripts/backup.sh >> /var/log/houseflow-backup.log 2>&1
+# Triggered by systemd timer: houseflow-backup.timer (daily at 03:00)
 
 BACKUP_DIR="/opt/houseflow/backups"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)

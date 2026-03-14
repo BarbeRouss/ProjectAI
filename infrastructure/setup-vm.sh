@@ -24,7 +24,7 @@ set -euo pipefail
 #   4. Generate docker-compose files for prod + preprod
 #   5. Generate .env with random secrets
 #   6. Install deployment scripts (backup, db sync)
-#   7. Configure cron for daily backups + logrotate
+#   7. Configure systemd timer for daily backups + logrotate
 #   8. Configure firewall (ufw)
 # ============================================================================
 
@@ -463,13 +463,38 @@ SYNC_SCRIPT
 
 chmod +x "$HOUSEFLOW_DIR/scripts/"*.sh
 
-# ── 9. Configure cron for backups ─────────────────
-info "Setting up daily backup cron job..."
-CRON_LINE="0 3 * * * $HOUSEFLOW_DIR/scripts/backup.sh >> /var/log/houseflow-backup.log 2>&1"
+# ── 9. Configure systemd timer for backups ────────
+info "Setting up daily backup systemd timer..."
 
-# Add cron job for houseflow user if not already present
-(crontab -u "$HOUSEFLOW_USER" -l 2>/dev/null || true) | grep -qF "backup.sh" || \
-  (crontab -u "$HOUSEFLOW_USER" -l 2>/dev/null || true; echo "$CRON_LINE") | crontab -u "$HOUSEFLOW_USER" -
+cat > /etc/systemd/system/houseflow-backup.service << SYSTEMD_SERVICE
+[Unit]
+Description=HouseFlow daily PostgreSQL backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=$HOUSEFLOW_USER
+ExecStart=$HOUSEFLOW_DIR/scripts/backup.sh
+StandardOutput=append:/var/log/houseflow-backup.log
+StandardError=append:/var/log/houseflow-backup.log
+SYSTEMD_SERVICE
+
+cat > /etc/systemd/system/houseflow-backup.timer << 'SYSTEMD_TIMER'
+[Unit]
+Description=Run HouseFlow backup daily at 03:00
+
+[Timer]
+OnCalendar=*-*-* 03:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+SYSTEMD_TIMER
+
+systemctl daemon-reload
+systemctl enable --now houseflow-backup.timer
+info "Systemd timer enabled (daily at 03:00)"
 
 # ── 10. Configure logrotate ──────────────────────
 info "Configuring logrotate for backup logs..."
