@@ -64,7 +64,8 @@
     "createError": "Failed to create house. Please try again.",
     "roleOwner": "Owner",
     "roleEditor": "Editor",
-    "roleViewer": "Viewer"
+    "roleViewer": "Viewer",
+    "deleteConfirmation": "Are you sure you want to delete \"{name}\"? This will delete all associated devices and maintenance records. This action cannot be undone."
   },
   "devices": {
     "title": "Devices",
@@ -82,7 +83,8 @@
     "noDevicesDescription": "Add your first device to start tracking maintenance",
     "createError": "Failed to create device. Please try again.",
     "maintenanceTypes": "Maintenance Types",
-    "addType": "Add Type"
+    "addType": "Add Type",
+    "deleteConfirmation": "Are you sure you want to delete \"{name}\"? All maintenance types and history will be deleted. This action cannot be undone."
   },
   "maintenance": {
     "title": "Maintenance",

@@ -11,7 +11,9 @@ import { AddMaintenanceTypeDialog } from '@/components/maintenance/add-maintenan
 import { DeviceDetailSkeleton, ListItemSkeleton } from '@/components/ui/skeleton';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { ScoreRing } from '@/components/ui/score-ring';
-import { Check, Clock, AlertTriangle, Plus } from 'lucide-react';
+import { EditDeviceDialog } from '@/components/devices/edit-device-dialog';
+import { DeleteDeviceDialog } from '@/components/devices/delete-device-dialog';
+import { Check, Clock, AlertTriangle, Plus, Pencil, Trash2 } from 'lucide-react';
 
 // Device type to emoji mapping
 const deviceEmojis: Record<string, string> = {
@@ -42,6 +44,8 @@ export default function DeviceDetailPage({ params }: { params: Promise<{ id: str
   const [showLogDialog, setShowLogDialog] = useState(false);
   const [showAddTypeDialog, setShowAddTypeDialog] = useState(false);
   const [selectedMaintenanceType, setSelectedMaintenanceType] = useState<string | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   if (deviceLoading) {
     return <DeviceDetailSkeleton />;
@@ -127,9 +131,28 @@ export default function DeviceDetailPage({ params }: { params: Promise<{ id: str
                 </div>
               </div>
 
-              {/* Score ring - hidden on very small screens */}
-              <div className="hidden sm:block">
-                <ScoreRing score={deviceScore} size="md" />
+              {/* Actions + Score ring */}
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowEditDialog(true)}
+                  title={t('editDevice')}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowDeleteDialog(true)}
+                  title={t('deleteDevice')}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <div className="hidden sm:block">
+                  <ScoreRing score={deviceScore} size="md" />
+                </div>
               </div>
             </div>
           </CardContent>
@@ -366,6 +389,23 @@ export default function DeviceDetailPage({ params }: { params: Promise<{ id: str
         deviceId={id}
         open={showAddTypeDialog}
         onClose={() => setShowAddTypeDialog(false)}
+      />
+
+      {/* Edit Device Dialog */}
+      <EditDeviceDialog
+        deviceId={id}
+        device={device}
+        open={showEditDialog}
+        onClose={() => setShowEditDialog(false)}
+      />
+
+      {/* Delete Device Dialog */}
+      <DeleteDeviceDialog
+        deviceId={id}
+        deviceName={device.name}
+        houseId={device.houseId}
+        open={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
       />
     </div>
   );

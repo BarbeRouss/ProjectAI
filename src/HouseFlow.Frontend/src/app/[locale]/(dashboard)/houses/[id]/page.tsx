@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo } from 'react';
+import { use, useMemo, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useHouse } from '@/lib/api/hooks';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,9 @@ import Link from 'next/link';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { HouseDetailSkeleton } from '@/components/ui/skeleton';
 import { ScoreRing } from '@/components/ui/score-ring';
-import { Check, Clock, AlertTriangle, Plus, ChevronRight, Home } from 'lucide-react';
+import { EditHouseDialog } from '@/components/houses/edit-house-dialog';
+import { DeleteHouseDialog } from '@/components/houses/delete-house-dialog';
+import { Check, Clock, AlertTriangle, Plus, ChevronRight, Home, Pencil, Trash2 } from 'lucide-react';
 
 // Device type to emoji mapping
 const deviceEmojis: Record<string, string> = {
@@ -33,6 +35,9 @@ export default function HouseDetailPage({ params }: { params: Promise<{ id: stri
   const tDevices = useTranslations('devices');
   const tCommon = useTranslations('common');
   const tMaintenance = useTranslations('maintenance');
+
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: house, isLoading: houseLoading } = useHouse(id);
 
@@ -126,12 +131,31 @@ export default function HouseDetailPage({ params }: { params: Promise<{ id: stri
                   <ScoreRing score={house.score} size="lg" />
                 </div>
 
-                <Link href={`/${locale}/houses/${id}/devices/new`}>
-                  <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-500/30">
-                    <Plus className="h-5 w-5 mr-2" />
-                    {tDevices('addDevice')}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowEditDialog(true)}
+                    title={t('editHouse')}
+                  >
+                    <Pencil className="h-4 w-4" />
                   </Button>
-                </Link>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowDeleteDialog(true)}
+                    title={t('deleteHouse')}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  <Link href={`/${locale}/houses/${id}/devices/new`}>
+                    <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-500/30">
+                      <Plus className="h-5 w-5 mr-2" />
+                      {tDevices('addDevice')}
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -276,6 +300,20 @@ export default function HouseDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         )}
       </div>
+
+      <EditHouseDialog
+        houseId={id}
+        house={house}
+        open={showEditDialog}
+        onClose={() => setShowEditDialog(false)}
+      />
+
+      <DeleteHouseDialog
+        houseId={id}
+        houseName={house.name}
+        open={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+      />
     </div>
   );
 }

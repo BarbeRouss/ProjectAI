@@ -64,7 +64,8 @@
     "createError": "Échec de la création de la maison. Veuillez réessayer.",
     "roleOwner": "Propriétaire",
     "roleEditor": "Éditeur",
-    "roleViewer": "Visualiseur"
+    "roleViewer": "Visualiseur",
+    "deleteConfirmation": "Êtes-vous sûr de vouloir supprimer « {name} » ? Cette action supprimera tous les appareils et entretiens associés. Cette action est irréversible."
   },
   "devices": {
     "title": "Appareils",
@@ -82,7 +83,8 @@
     "noDevicesDescription": "Ajoutez votre premier appareil pour commencer le suivi",
     "createError": "Échec de la création de l'appareil. Veuillez réessayer.",
     "maintenanceTypes": "Types d'entretien",
-    "addType": "Ajouter"
+    "addType": "Ajouter",
+    "deleteConfirmation": "Êtes-vous sûr de vouloir supprimer « {name} » ? Tous les types d'entretien et l'historique seront supprimés. Cette action est irréversible."
   },
   "maintenance": {
     "title": "Entretien",
