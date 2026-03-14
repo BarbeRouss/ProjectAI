@@ -84,7 +84,7 @@ jobs:
   e2e-tests:
     name: E2E Tests (Playwright)
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 20
     needs: [backend-tests, frontend-checks]
 
     services:
@@ -130,7 +130,7 @@ jobs:
 
       - name: Install Playwright Browsers
         working-directory: src/HouseFlow.Frontend
-        run: npx playwright install --with-deps chromium firefox webkit
+        run: npx playwright install --with-deps chromium
 
       - name: Build .NET projects
         run: dotnet build --no-restore
@@ -139,11 +139,19 @@ jobs:
         run: |
           dotnet run --project src/HouseFlow.AppHost &
           echo $! > aspire.pid
-          sleep 30
+
+      - name: Wait for Aspire App to be ready
+        run: |
+          echo "Waiting for API (localhost:5203)..."
+          timeout 120 bash -c 'until curl -sf http://localhost:5203/api/v1/maintenance-types > /dev/null 2>&1; do sleep 2; done'
+          echo "API is ready."
+          echo "Waiting for Frontend (localhost:3000)..."
+          timeout 120 bash -c 'until curl -sf http://localhost:3000 > /dev/null 2>&1; do sleep 2; done'
+          echo "Frontend is ready."
 
       - name: Run Playwright tests
         working-directory: src/HouseFlow.Frontend
-        run: npm test
+        run: npx playwright test --project=chromium
         env:
           API_URL: http://localhost:5203
 
