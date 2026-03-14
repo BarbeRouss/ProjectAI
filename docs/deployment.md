@@ -56,10 +56,10 @@ Traefik est géré séparément. Configurer les routes :
 
 | Domaine | Destination |
 |---------|-------------|
-| `houseflow.com` | `localhost:3000` |
-| `api.houseflow.com` | `localhost:8080` |
-| `preprod.houseflow.com` | `localhost:3100` |
-| `api.preprod.houseflow.com` | `localhost:8180` |
+| `houseflow.rouss.be` | `localhost:3000` |
+| `api.houseflow.rouss.be` | `localhost:8080` |
+| `preprod.houseflow.rouss.be` | `localhost:3100` |
+| `api.preprod.houseflow.rouss.be` | `localhost:8180` |
 
 ### 5. Configurer GitHub
 

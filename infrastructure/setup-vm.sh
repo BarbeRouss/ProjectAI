@@ -333,14 +333,14 @@ DB_PASSWORD=${DB_PASS}
 
 # JWT (auto-generated, 48 bytes base64)
 JWT_KEY=${JWT_SECRET}
-JWT_ISSUER=https://api.houseflow.com
-JWT_AUDIENCE=https://houseflow.com
+JWT_ISSUER=https://api.houseflow.rouss.be
+JWT_AUDIENCE=https://houseflow.rouss.be
 
 # CORS (comma-separated origins)
-CORS_ORIGINS=https://houseflow.com
+CORS_ORIGINS=https://houseflow.rouss.be
 
 # Public URL for frontend to reach API
-API_PUBLIC_URL=https://api.houseflow.com
+API_PUBLIC_URL=https://api.houseflow.rouss.be
 
 # Image tag (set by CI/CD, default: latest)
 IMAGE_TAG=latest
@@ -356,14 +356,14 @@ DB_PASSWORD=${DB_PASS}
 
 # JWT (auto-generated, 48 bytes base64)
 JWT_KEY=${JWT_SECRET}
-JWT_ISSUER=https://api.preprod.houseflow.com
-JWT_AUDIENCE=https://preprod.houseflow.com
+JWT_ISSUER=https://api.preprod.houseflow.rouss.be
+JWT_AUDIENCE=https://preprod.houseflow.rouss.be
 
 # CORS (comma-separated origins)
-CORS_ORIGINS=https://preprod.houseflow.com
+CORS_ORIGINS=https://preprod.houseflow.rouss.be
 
 # Public URL for frontend to reach API
-API_PUBLIC_URL=https://api.preprod.houseflow.com
+API_PUBLIC_URL=https://api.preprod.houseflow.rouss.be
 
 # Image tag (set by CI/CD, default: latest)
 IMAGE_TAG=latest
@@ -535,10 +535,10 @@ echo "     cd $HOUSEFLOW_DIR/prod && sudo -u $HOUSEFLOW_USER docker compose up -
 echo "  4. Start preprod:"
 echo "     cd $HOUSEFLOW_DIR/preprod && sudo -u $HOUSEFLOW_USER docker compose up -d"
 echo "  5. Configure Traefik (separately) to route:"
-echo "     - houseflow.com     → localhost:3000"
-echo "     - api.houseflow.com     → localhost:8080"
-echo "     - preprod.houseflow.com → localhost:3100"
-echo "     - api.preprod.houseflow.com → localhost:8180"
+echo "     - houseflow.rouss.be     → localhost:3000"
+echo "     - api.houseflow.rouss.be     → localhost:8080"
+echo "     - preprod.houseflow.rouss.be → localhost:3100"
+echo "     - api.preprod.houseflow.rouss.be → localhost:8180"
 echo "  6. Add GitHub secrets:"
 echo "     - DEPLOY_HOST: VM public IP or DDNS"
 echo "     - DEPLOY_USER: $HOUSEFLOW_USER"

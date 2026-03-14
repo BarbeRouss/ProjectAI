@@ -532,15 +532,15 @@ JWT_KEY=CHANGE_ME_MINIMUM_32_CHARS_SECRET_KEY
 GHCR_TOKEN=ghp_xxx
 
 # ── Prod (.env dans /opt/houseflow/prod/) ──
-# JWT_ISSUER=https://api.houseflow.com
-# JWT_AUDIENCE=https://houseflow.com
-# CORS_ORIGINS=https://houseflow.com
+# JWT_ISSUER=https://api.houseflow.rouss.be
+# JWT_AUDIENCE=https://houseflow.rouss.be
+# CORS_ORIGINS=https://houseflow.rouss.be
 # IMAGE_TAG=latest
 
 # ── Preprod (.env dans /opt/houseflow/preprod/) ──
-# JWT_ISSUER=https://api.preprod.houseflow.com
-# JWT_AUDIENCE=https://preprod.houseflow.com
-# CORS_ORIGINS=https://preprod.houseflow.com
+# JWT_ISSUER=https://api.preprod.houseflow.rouss.be
+# JWT_AUDIENCE=https://preprod.houseflow.rouss.be
+# CORS_ORIGINS=https://preprod.houseflow.rouss.be
 # IMAGE_TAG=latest
 ```
 
