@@ -76,13 +76,36 @@ jobs:
         run: npm run build
 
   # ============================================================================
-  # E2E Tests (requires full stack)
+  # E2E Tests (requires full stack, without Aspire orchestrator)
   # ============================================================================
   e2e-tests:
     name: E2E Tests (Playwright)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     needs: [backend-tests, frontend-checks]
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: houseflow
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    env:
+      ConnectionStrings__houseflow: "Host=localhost;Port=5432;Database=houseflow;Username=postgres;Password=postgres"
+      JWT__KEY: "ThisIsAVeryLongSecretKeyForCITestingPurposesOnly1234567890"
+      Jwt__Issuer: "HouseFlow"
+      Jwt__Audience: "HouseFlow"
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://localhost:5203"
+      NEXT_PUBLIC_API_URL: "http://localhost:5203"
 
     steps:
       - name: Checkout code
@@ -93,9 +116,6 @@ jobs:
         with:
           dotnet-version: '10.0.x'
           include-prerelease: true
-
-      - name: Install Aspire workload
-        run: dotnet workload install aspire
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -118,38 +138,41 @@ jobs:
       - name: Build .NET projects
         run: dotnet build --no-restore
 
-      - name: Start Aspire App (background)
+      - name: Start API (background)
         run: |
-          dotnet run --project src/HouseFlow.AppHost > /tmp/aspire-apphost.log 2>&1 &
-          echo $! > aspire.pid
+          dotnet run --project src/HouseFlow.API --no-build > /tmp/api.log 2>&1 &
+          echo $! > api.pid
 
-      - name: Wait for Aspire App to be ready
+      - name: Start Frontend (background)
+        working-directory: src/HouseFlow.Frontend
+        run: |
+          npm run dev > /tmp/frontend.log 2>&1 &
+          echo $! > /tmp/frontend.pid
+
+      - name: Wait for services to be ready
         run: |
           echo "Waiting for API health check (localhost:5203/health)..."
-          timeout 120 bash -c 'until curl -sf http://localhost:5203/health > /dev/null 2>&1; do sleep 2; done'
+          timeout 60 bash -c 'until curl -sf http://localhost:5203/health > /dev/null 2>&1; do sleep 2; done'
           echo "API is healthy."
           echo "Waiting for Frontend (localhost:3000)..."
-          timeout 120 bash -c 'until curl -sf http://localhost:3000 > /dev/null 2>&1; do sleep 2; done'
+          timeout 60 bash -c 'until curl -sf http://localhost:3000 > /dev/null 2>&1; do sleep 2; done'
           echo "Frontend is ready."
 
-      - name: Debug Aspire App (on failure)
+      - name: Debug services (on failure)
         if: failure()
         run: |
-          echo "=== Docker containers ==="
-          docker ps -a
           echo "=== Listening ports ==="
           ss -tlnp
-          echo "=== Aspire AppHost logs (last 50 lines) ==="
-          tail -50 /tmp/aspire-apphost.log 2>/dev/null || echo "No log file found"
-          echo "=== Try curl on common ports ==="
+          echo "=== API logs (last 30 lines) ==="
+          tail -30 /tmp/api.log 2>/dev/null || echo "No API log"
+          echo "=== Frontend logs (last 30 lines) ==="
+          tail -30 /tmp/frontend.log 2>/dev/null || echo "No frontend log"
+          echo "=== Curl API ==="
           curl -v http://localhost:5203/health 2>&1 || true
-          curl -v http://localhost:5000/health 2>&1 || true
 
       - name: Run Playwright tests
         working-directory: src/HouseFlow.Frontend
         run: npx playwright test --project=chromium
-        env:
-          API_URL: http://localhost:5203
 
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
@@ -159,9 +182,8 @@ jobs:
           path: src/HouseFlow.Frontend/playwright-report/
           retention-days: 30
 
-      - name: Stop Aspire App
+      - name: Stop services
         if: always()
         run: |
-          if [ -f aspire.pid ]; then
-            kill $(cat aspire.pid) || true
-          fi
+          [ -f api.pid ] && kill $(cat api.pid) || true
+          [ -f /tmp/frontend.pid ] && kill $(cat /tmp/frontend.pid) || true
