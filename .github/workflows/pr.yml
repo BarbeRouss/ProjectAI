@@ -158,7 +158,7 @@ jobs:
           sleep 10
           if ! ps -p $API_PID > /dev/null 2>&1; then
             echo "::error::API process crashed at startup"
-            echo "::error::$(tail -5 /tmp/api.log)"
+            echo "::error::$(tail -20 /tmp/api.log | tr '\n' ' | ')"
             cat /tmp/api.log
             exit 1
           fi
