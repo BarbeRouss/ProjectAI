@@ -99,6 +99,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+// Health checks
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<HouseFlowDbContext>();
+
 // NSwag OpenAPI
 builder.Services.AddOpenApiDocument(config =>
 {
@@ -254,6 +258,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHealthChecks("/health");
+app.MapHealthChecks("/alive", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = _ => false // No checks, just confirms the app is running
+});
 
 app.Run();
 
