@@ -72,10 +72,16 @@ jobs:
 
       - name: Show frontend build error
         if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "::error::FRONTEND_BUILD_LOG_START"
-          tail -50 /tmp/frontend-build.log 2>/dev/null || echo "No log"
-          echo "::error::FRONTEND_BUILD_LOG_END"
+          LOG=$(tail -80 /tmp/frontend-build.log 2>/dev/null || echo "No log found")
+          gh api repos/${{ github.repository }}/issues/12/comments \
+            -X POST \
+            -f body="### Frontend Docker Build Failed
+          \`\`\`
+          $LOG
+          \`\`\`"
 
       - name: Tag & push images
         env:
