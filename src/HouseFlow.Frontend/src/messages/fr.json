@@ -45,7 +45,7 @@
     "myHouses": "Mes Maisons",
     "addHouse": "Ajouter une Maison",
     "noHousesYet": "Aucune Maison",
-    "getStarted": "Commencez par créer votre première maison"
+    "getStarted": "Commencez par créer votre première maison pour suivre l'entretien de vos équipements."
   },
   "houses": {
     "title": "Maisons",
@@ -59,6 +59,8 @@
     "members": "Membres",
     "inviteMember": "Inviter un Membre",
     "notFound": "Maison non trouvée",
+    "noHousesYet": "Aucune Maison",
+    "noHousesDescription": "Commencez par créer votre première maison pour suivre l'entretien de vos équipements.",
     "memberCount": "membre(s)",
     "loadingDevices": "Chargement des appareils...",
     "createError": "Échec de la création de la maison. Veuillez réessayer.",
@@ -80,10 +82,12 @@
     "installedIn": "Installé en",
     "maintenance": "Entretien",
     "noDevicesYet": "Aucun Appareil",
-    "noDevicesDescription": "Ajoutez votre premier appareil pour commencer le suivi",
+    "noDevicesDescription": "Ajoutez votre premier appareil pour commencer le suivi de l'entretien de votre maison.",
     "createError": "Échec de la création de l'appareil. Veuillez réessayer.",
     "maintenanceTypes": "Types d'entretien",
     "addType": "Ajouter",
+    "noMaintenanceTypes": "Aucun type d'entretien",
+    "noMaintenanceTypesDescription": "Configurez un premier type d'entretien pour suivre la maintenance de cet appareil.",
     "deleteConfirmation": "Êtes-vous sûr de vouloir supprimer « {name} » ? Tous les types d'entretien et l'historique seront supprimés. Cette action est irréversible."
   },
   "maintenance": {
@@ -113,7 +117,8 @@
     "overdue": "En retard",
     "nextDue": "Prochaine échéance",
     "records": "enregistrement(s)",
-    "noHistory": "Aucun historique d'entretien"
+    "noHistory": "Aucun historique d'entretien",
+    "noHistoryDescription": "Commencez par enregistrer votre premier entretien pour cet appareil."
   },
   "header": {
     "home": "Accueil",

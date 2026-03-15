@@ -13,7 +13,8 @@ import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { ScoreRing } from '@/components/ui/score-ring';
 import { EditDeviceDialog } from '@/components/devices/edit-device-dialog';
 import { DeleteDeviceDialog } from '@/components/devices/delete-device-dialog';
-import { Check, Clock, AlertTriangle, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Check, Clock, AlertTriangle, Plus, Pencil, Trash2, Wrench } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 
 // Device type to emoji mapping
 const deviceEmojis: Record<string, string> = {
@@ -179,11 +180,20 @@ export default function DeviceDetailPage({ params }: { params: Promise<{ id: str
 
             <div className="space-y-3">
               {maintenanceTypes.length === 0 ? (
-                <Card className="bg-white/80 dark:bg-gray-800/80">
-                  <CardContent className="p-6 text-center text-gray-500 dark:text-gray-400">
-                    Aucun type d&apos;entretien configuré
-                  </CardContent>
-                </Card>
+                <EmptyState
+                  icon={Wrench}
+                  title={t('noMaintenanceTypes')}
+                  description={t('noMaintenanceTypesDescription')}
+                  action={
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowAddTypeDialog(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      {t('addType')}
+                    </Button>
+                  }
+                />
               ) : (
                 maintenanceTypes.map((type) => (
                   <Card
@@ -304,15 +314,15 @@ export default function DeviceDetailPage({ params }: { params: Promise<{ id: str
                     <ListItemSkeleton />
                   </div>
                 ) : !maintenanceHistory?.instances || maintenanceHistory.instances.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Clock className="h-8 w-8 text-gray-400" />
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                      <Clock className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                     </div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                       {tMaintenance('noHistory')}
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Commencez par logger votre premier entretien
+                    <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
+                      {tMaintenance('noHistoryDescription')}
                     </p>
                   </div>
                 ) : (

@@ -9,7 +9,8 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth/context';
 import { HousesGridSkeleton } from '@/components/ui/skeleton';
 import { ScoreRing } from '@/components/ui/score-ring';
-import { Check, Clock, AlertTriangle, Plus, Home, ChevronRight, Wrench, Calendar } from 'lucide-react';
+import { Check, Clock, AlertTriangle, Plus, Home, ChevronRight, Wrench, Calendar, Building2 } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export default function DashboardPage() {
   const locale = useLocale();
@@ -205,19 +206,19 @@ export default function DashboardPage() {
         {isLoading ? (
           <HousesGridSkeleton />
         ) : houses.length === 0 ? (
-          <Card className="bg-white/80 dark:bg-gray-800/80">
-            <CardHeader>
-              <CardTitle>{t('noHousesYet')}</CardTitle>
-              <CardDescription>
-                {t('getStarted')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <EmptyState
+            icon={Building2}
+            title={t('noHousesYet')}
+            description={t('getStarted')}
+            action={
               <Link href={`/${locale}/houses/new`}>
-                <Button>{tHouses('addHouse')}</Button>
+                <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-500/30">
+                  <Plus className="h-5 w-5 mr-2" />
+                  {tHouses('addHouse')}
+                </Button>
               </Link>
-            </CardContent>
-          </Card>
+            }
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {houses.map((house) => {

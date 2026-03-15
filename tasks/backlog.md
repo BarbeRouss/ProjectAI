@@ -12,8 +12,8 @@ Features non planifiées, issues de la roadmap.
 - [x] Locale switcher (FR/EN) dans le header
 - [x] Loading states (skeletons)
 - [x] Error handling UI (ErrorBoundary)
-- [ ] Empty states avec illustrations
-- [ ] Tests unitaires frontend
+- [x] Empty states avec illustrations
+- [x] Tests unitaires frontend
 
 ---
 
