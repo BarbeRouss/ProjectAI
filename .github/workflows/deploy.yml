@@ -133,14 +133,19 @@ jobs:
           port: ${{ secrets.DEPLOY_SSH_PORT }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: VERSION
+          envs: VERSION,GHCR_PAT
           script: |
             set -e
             cd /opt/houseflow/preprod
+
+            # Re-auth GHCR (token may have expired)
+            echo "$GHCR_PAT" | docker login ghcr.io -u barberouss --password-stdin
+
             sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$VERSION/" .env
             docker compose pull
         env:
           VERSION: ${{ needs.build.outputs.version }}
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
 
       - name: Start services
         uses: appleboy/ssh-action@v1
