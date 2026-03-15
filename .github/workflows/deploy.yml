@@ -11,8 +11,6 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  API_IMAGE: ghcr.io/${{ github.repository_owner }}/houseflow-api
-  WEB_IMAGE: ghcr.io/${{ github.repository_owner }}/houseflow-frontend
 
 jobs:
   # ── Job 1: Build & Push ──────────────────────────
@@ -31,6 +29,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Need tags for CalVer counter
+
+      - name: Set image names
+        id: images
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "api=ghcr.io/${OWNER}/houseflow-api" >> "$GITHUB_OUTPUT"
+          echo "web=ghcr.io/${OWNER}/houseflow-frontend" >> "$GITHUB_OUTPUT"
 
       - name: Generate CalVer tag
         id: version
@@ -66,18 +71,14 @@ jobs:
         run: docker build -t api:latest -f src/HouseFlow.API/Dockerfile .
 
       - name: Build Frontend image
-        run: |
-          set -o pipefail
-          if ! docker build --progress=plain -t frontend:latest src/HouseFlow.Frontend 2>&1 | tee /tmp/frontend-build.log; then
-            ERROR_LINE=$(tail -5 /tmp/frontend-build.log | tr '\n' ' | ')
-            echo "::error::Frontend build failed: $ERROR_LINE"
-            exit 1
-          fi
+        run: docker build --progress=plain -t frontend:latest src/HouseFlow.Frontend
 
       - name: Tag & push images
         env:
           VERSION: ${{ steps.version.outputs.tag }}
           REF_NAME: ${{ github.ref_name }}
+          API_IMAGE: ${{ steps.images.outputs.api }}
+          WEB_IMAGE: ${{ steps.images.outputs.web }}
         run: |
           docker tag api:latest "$API_IMAGE:$VERSION"
           docker push "$API_IMAGE:$VERSION"
