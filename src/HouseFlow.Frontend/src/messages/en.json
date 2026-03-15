@@ -45,7 +45,7 @@
     "myHouses": "My Houses",
     "addHouse": "Add House",
     "noHousesYet": "No Houses Yet",
-    "getStarted": "Get started by creating your first house"
+    "getStarted": "Get started by creating your first house to track your equipment maintenance."
   },
   "houses": {
     "title": "Houses",
@@ -59,6 +59,8 @@
     "members": "Members",
     "inviteMember": "Invite Member",
     "notFound": "House not found",
+    "noHousesYet": "No Houses Yet",
+    "noHousesDescription": "Get started by creating your first house to track your equipment maintenance.",
     "memberCount": "member(s)",
     "loadingDevices": "Loading devices...",
     "createError": "Failed to create house. Please try again.",
@@ -80,10 +82,12 @@
     "installedIn": "Installed in",
     "maintenance": "Maintenance",
     "noDevicesYet": "No Devices Yet",
-    "noDevicesDescription": "Add your first device to start tracking maintenance",
+    "noDevicesDescription": "Add your first device to start tracking your home maintenance.",
     "createError": "Failed to create device. Please try again.",
     "maintenanceTypes": "Maintenance Types",
     "addType": "Add Type",
+    "noMaintenanceTypes": "No maintenance types",
+    "noMaintenanceTypesDescription": "Set up a maintenance type to start tracking this device's upkeep.",
     "deleteConfirmation": "Are you sure you want to delete \"{name}\"? All maintenance types and history will be deleted. This action cannot be undone."
   },
   "maintenance": {
@@ -113,7 +117,8 @@
     "overdue": "Overdue",
     "nextDue": "Next due",
     "records": "record(s)",
-    "noHistory": "No maintenance history yet"
+    "noHistory": "No maintenance history yet",
+    "noHistoryDescription": "Start by logging your first maintenance for this device."
   },
   "header": {
     "home": "Home",
