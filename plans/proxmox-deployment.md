@@ -24,12 +24,12 @@ VM Proxmox (Docker)
 │
 ├── preprod/
 │   ├── houseflow-api      (ghcr.io/…/api:2026.03.14)
-│   ├── houseflow-web      (ghcr.io/…/web:2026.03.14)
+│   ├── houseflow-frontend (ghcr.io/…/frontend:2026.03.14)
 │   └── postgres-preprod   (copie de la DB prod à chaque deploy)
 │
 └── prod/
     ├── houseflow-api      (ghcr.io/…/api:2026.03.14)
-    ├── houseflow-web      (ghcr.io/…/web:2026.03.14)
+    ├── houseflow-frontend (ghcr.io/…/frontend:2026.03.14)
     └── postgres           (données persistantes)
 
 Internet → Traefik (géré séparément)
@@ -55,8 +55,8 @@ Format : `YYYY.MM.DD` avec suffixe `-N` si plusieurs releases le même jour.
 ```
 ghcr.io/barberouss/houseflow-api:2026.03.14
 ghcr.io/barberouss/houseflow-api:latest
-ghcr.io/barberouss/houseflow-web:2026.03.14
-ghcr.io/barberouss/houseflow-web:latest
+ghcr.io/barberouss/houseflow-frontend:2026.03.14
+ghcr.io/barberouss/houseflow-frontend:latest
 ```
 
 Le tag CalVer est calculé automatiquement dans le CI à partir de la date + compteur.
@@ -297,7 +297,7 @@ on:
 env:
   REGISTRY: ghcr.io
   API_IMAGE: ghcr.io/${{ github.repository_owner }}/houseflow-api
-  WEB_IMAGE: ghcr.io/${{ github.repository_owner }}/houseflow-web
+  WEB_IMAGE: ghcr.io/${{ github.repository_owner }}/houseflow-frontend
 
 jobs:
   # ── Job 1: Build & Push ──────────────────────────
@@ -365,8 +365,8 @@ jobs:
           docker push ${{ env.API_IMAGE }}:latest
 
           # Frontend
-          docker tag houseflow-web:latest ${{ env.WEB_IMAGE }}:${VERSION}
-          docker tag houseflow-web:latest ${{ env.WEB_IMAGE }}:latest
+          docker tag houseflow-frontend:latest ${{ env.WEB_IMAGE }}:${VERSION}
+          docker tag houseflow-frontend:latest ${{ env.WEB_IMAGE }}:latest
           docker push ${{ env.WEB_IMAGE }}:${VERSION}
           docker push ${{ env.WEB_IMAGE }}:latest
 
