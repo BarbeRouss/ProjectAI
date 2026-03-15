@@ -117,19 +117,33 @@ jobs:
           port: ${{ secrets.DEPLOY_SSH_PORT }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: VERSION
+          envs: VERSION,GHCR_TOKEN,GHCR_USER
           script: |
             set -e
-            echo "Connected to $(hostname)"
-            echo "Deploying version: $VERSION"
+            echo "Deploying preprod version: $VERSION"
 
-            # Ensure deploy directory exists
-            mkdir -p /opt/houseflow/preprod
+            cd /opt/houseflow/preprod
 
-            # TODO: Add docker-compose.yml and full deploy once infra is ready
-            echo "Preprod deploy placeholder — infra setup pending"
+            # Login to GHCR
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+            # Update image tag and pull
+            sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$VERSION/" .env
+            docker compose pull
+
+            # Restart services
+            docker compose up -d
+
+            # Health check (wait for API to be ready)
+            echo "Waiting for API health check..."
+            sleep 10
+            curl -f http://localhost:8180/alive || (docker compose logs api --tail 30 && exit 1)
+
+            echo "Preprod deployed: $VERSION"
         env:
           VERSION: ${{ needs.build.outputs.version }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
 
   # ── Job 3: Deploy Prod (manual approval, main only) ──
   deploy-prod:
@@ -148,16 +162,33 @@ jobs:
           port: ${{ secrets.DEPLOY_SSH_PORT }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: VERSION
+          envs: VERSION,GHCR_TOKEN,GHCR_USER
           script: |
             set -e
-            echo "Connected to $(hostname)"
-            echo "Deploying version: $VERSION"
+            echo "Deploying production version: $VERSION"
 
-            # Ensure deploy directory exists
-            mkdir -p /opt/houseflow/prod
+            cd /opt/houseflow/prod
 
-            # TODO: Add docker-compose.yml and full deploy once infra is ready
-            echo "Production deploy placeholder — infra setup pending"
+            # Login to GHCR
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+            # Update image tag and pull
+            sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$VERSION/" .env
+            docker compose pull
+
+            # Restart services
+            docker compose up -d
+
+            # Health check (wait for API to be ready)
+            echo "Waiting for API health check..."
+            sleep 10
+            curl -f http://localhost:8080/alive || (docker compose logs api --tail 30 && exit 1)
+
+            # Cleanup old images (keep last 72h)
+            docker image prune -f --filter "until=72h"
+
+            echo "Production deployed: $VERSION"
         env:
           VERSION: ${{ needs.build.outputs.version }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
