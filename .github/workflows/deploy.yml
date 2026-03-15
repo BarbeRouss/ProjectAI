@@ -108,6 +108,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: preprod
     timeout-minutes: 10
+    permissions:
+      packages: read
 
     steps:
       - name: Deploy preprod via SSH
@@ -120,26 +122,37 @@ jobs:
           envs: VERSION,GHCR_TOKEN,GHCR_USER
           script: |
             set -e
-            echo "Deploying preprod version: $VERSION"
+            echo "=== Deploying preprod version: $VERSION ==="
+            echo "User: $(whoami) | Host: $(hostname)"
+
+            echo "--- Checking directory ---"
+            ls -la /opt/houseflow/preprod/ || { echo "ERROR: /opt/houseflow/preprod not found"; exit 1; }
 
             cd /opt/houseflow/preprod
 
-            # Login to GHCR
+            echo "--- GHCR login ---"
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
-            # Update image tag and pull
+            echo "--- Updating IMAGE_TAG in .env ---"
             sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$VERSION/" .env
+            grep IMAGE_TAG .env
+
+            echo "--- Pulling images ---"
             docker compose pull
 
-            # Restart services
+            echo "--- Starting services ---"
             docker compose up -d
 
-            # Health check (wait for API to be ready)
-            echo "Waiting for API health check..."
-            sleep 10
-            curl -f http://localhost:8180/alive || (docker compose logs api --tail 30 && exit 1)
+            echo "--- Waiting for health check (30s) ---"
+            sleep 30
+            curl -sf http://localhost:8180/alive && echo "API is healthy!" || {
+              echo "=== API HEALTH CHECK FAILED ==="
+              docker compose ps
+              docker compose logs --tail 50
+              exit 1
+            }
 
-            echo "Preprod deployed: $VERSION"
+            echo "=== Preprod deployed: $VERSION ==="
         env:
           VERSION: ${{ needs.build.outputs.version }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -153,6 +166,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 10
+    permissions:
+      packages: read
 
     steps:
       - name: Deploy prod via SSH
