@@ -470,7 +470,8 @@ NEXT_PUBLIC_API_URL=http://localhost:5203
 - **Quick Start**: `README.md`
 - **Specifications**: `specs/` (requirements, user-stories, architecture, openapi)
 - **Wireframes**: `specs/wireframes/`
-- **Task Management**: `tasks/` (backlog, sprint, archive)
+- **Task Management**: [GitHub Issues](https://github.com/BarbeRouss/HouseFlow/issues) + [Milestones](https://github.com/BarbeRouss/HouseFlow/milestones)
+- **Lessons Learned**: `tasks/lessons.md`
 
 ---
 

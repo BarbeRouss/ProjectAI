@@ -46,21 +46,29 @@ specs/                  # Spécifications (source of truth)
 ├── openapi.yaml        # Contrat API
 └── wireframes/         # Maquettes UI
 
-tasks/                  # Gestion de projet
-├── backlog.md          # Features non planifiées (roadmap)
-├── sprint.md           # Sprint actuel avec tâches
-└── archive/            # Sprints terminés
+tasks/                  # Connaissances de projet
+└── lessons.md          # Leçons apprises (patterns, erreurs à éviter)
 ```
+
+## Task Management → GitHub Issues
+
+**Source de vérité unique : GitHub Issues + Milestones**
+
+- Backlog = GitHub Issues ouvertes, organisées par Milestones (phases)
+- Sprint = GitHub Project board ou filtre par milestone
+- Chaque PR référence `Closes #XX` pour fermer l'issue automatiquement au merge
+- Labels: `phase:*`, `priority:*`, `backend`, `frontend`, `security`, `infra`, `tech-debt`
+- Ne PAS créer de fichiers de tâches locaux (backlog.md, sprint.md, etc.)
 
 ## Workflow: Réflexion → Développement
 
 ### Règle fondamentale
-**TOUJOURS** ajouter une nouvelle feature à `specs/user-stories.md` AVANT de créer un sprint.
-Le sprint référence les User Stories, pas l'inverse.
+**TOUJOURS** ajouter une nouvelle feature à `specs/user-stories.md` AVANT de coder.
+Les GitHub Issues référencent les User Stories, pas l'inverse.
 
 ```
-specs/user-stories.md  →  tasks/sprint.md  →  Code
-     (QUOI)                  (COMMENT)        (FAIRE)
+specs/user-stories.md  →  GitHub Issue  →  PR (Closes #XX)  →  Code
+     (QUOI)                 (COMMENT)       (LIVRAISON)        (FAIRE)
 ```
 
 ### Phase 1: Réflexion (conversation)
@@ -69,44 +77,20 @@ Quand l'utilisateur veut implémenter une feature:
 2. Analyser l'existant dans `PROJECT_KNOWLEDGE.md`
 3. Proposer une approche technique
 4. **Si nouvelle feature**: Ajouter US-XXX à `specs/user-stories.md`
-5. Générer les tâches dans `tasks/sprint.md` (référencer les US)
+5. Créer une GitHub Issue avec description et checklist (si pas déjà existante)
 6. Attendre validation utilisateur
 
 ### Phase 2: Développement (agent)
 Quand l'utilisateur dit "implémente" ou "go":
-1. Lire `tasks/sprint.md`
-2. Exécuter tâche par tâche
-3. Cocher [x] dans sprint.md au fur et à mesure
-4. Cocher [x] dans user-stories.md quand critères validés
-5. Mettre à jour `PROJECT_KNOWLEDGE.md` à la fin
-6. Archiver le sprint dans `tasks/archive/YYYY-MM-description.md`
-
-### Format sprint.md
-```markdown
-# Sprint: [Nom]
-
-**Objectif:** [Description courte]
-**Créé:** YYYY-MM-DD
-**Status:** En cours | Terminé
-
-## Tâches
-
-### Backend
-- [ ] Tâche 1
-- [ ] Tâche 2
-
-### Frontend
-- [ ] Tâche 1
-
-### Tests
-- [ ] Test 1
-
-## Notes
-- Point important
-```
+1. Lire la GitHub Issue concernée
+2. Exécuter tâche par tâche (utiliser TodoWrite pour le suivi en session)
+3. Cocher [x] dans user-stories.md quand critères validés
+4. Mettre à jour `PROJECT_KNOWLEDGE.md` à la fin
+5. PR avec `Closes #XX` → l'issue se ferme au merge
 
 ## Task Tracking
-- Utiliser le TodoWrite tool pendant le développement
+- **Source de vérité**: GitHub Issues + Milestones (pas de fichiers locaux)
+- Utiliser le TodoWrite tool pendant le développement pour le suivi en session
 - Marquer les tâches terminées immédiatement
 - Capturer les leçons dans `tasks/lessons.md` après corrections
 
