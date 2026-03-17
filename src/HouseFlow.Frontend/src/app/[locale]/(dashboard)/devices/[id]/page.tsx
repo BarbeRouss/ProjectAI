@@ -78,7 +78,7 @@ export default function DeviceDetailPage({ params }: { params: Promise<{ id: str
         {/* Breadcrumb */}
         <Breadcrumb
           items={[
-            { label: device.houseName || 'Maison', href: `/${locale}/houses/${device.houseId}` },
+            { label: device.houseName || t('house'), href: `/${locale}/houses/${device.houseId}` },
             { label: device.name },
           ]}
         />
@@ -275,7 +275,7 @@ export default function DeviceDetailPage({ params }: { params: Promise<{ id: str
             {maintenanceHistory && maintenanceHistory.count > 0 && (
               <Card className="bg-gradient-to-br from-blue-500 to-purple-600 text-white border-0">
                 <CardContent className="p-5">
-                  <h3 className="font-semibold mb-3">Statistiques</h3>
+                  <h3 className="font-semibold mb-3">{tMaintenance('statistics')}</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-blue-100">{tCommon('totalSpent')}</span>
@@ -284,12 +284,12 @@ export default function DeviceDetailPage({ params }: { params: Promise<{ id: str
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-blue-100">Entretiens loggés</span>
+                      <span className="text-blue-100">{tMaintenance('maintenanceLogged')}</span>
                       <span className="font-bold text-lg">{maintenanceHistory.count}</span>
                     </div>
                     {device.installDate && (
                       <div className="flex justify-between items-center">
-                        <span className="text-blue-100">Depuis</span>
+                        <span className="text-blue-100">{tMaintenance('since')}</span>
                         <span className="font-bold">{format(new Date(device.installDate), 'MMM yyyy')}</span>
                       </div>
                     )}

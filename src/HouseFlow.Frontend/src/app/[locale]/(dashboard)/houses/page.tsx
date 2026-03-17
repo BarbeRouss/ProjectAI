@@ -30,7 +30,7 @@ export default function HousesPage() {
             </h1>
             {housesData?.globalScore !== undefined && (
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Score global: {housesData.globalScore}%
+                {t('globalScore')}: {housesData.globalScore}%
               </p>
             )}
           </div>
@@ -73,7 +73,7 @@ export default function HousesPage() {
                     {house.address && house.city && house.zipCode ? (
                       <>{house.address}, {house.city} {house.zipCode}</>
                     ) : (
-                      <>{house.devicesCount} appareil(s)</>
+                      <>{t('deviceCount', { count: house.devicesCount })}</>
                     )}
                   </CardDescription>
                 </CardHeader>

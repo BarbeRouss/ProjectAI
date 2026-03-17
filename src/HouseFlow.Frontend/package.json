@@ -12,7 +12,8 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:ui": "playwright test --ui",
-    "test:debug": "playwright test --debug"
+    "test:debug": "playwright test --debug",
+    "test:i18n": "npx tsx scripts/check-translations.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
