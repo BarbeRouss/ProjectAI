@@ -11,7 +11,8 @@ import { HouseDetailSkeleton } from '@/components/ui/skeleton';
 import { ScoreRing } from '@/components/ui/score-ring';
 import { EditHouseDialog } from '@/components/houses/edit-house-dialog';
 import { DeleteHouseDialog } from '@/components/houses/delete-house-dialog';
-import { Check, Clock, AlertTriangle, Plus, ChevronRight, Home, Pencil, Trash2 } from 'lucide-react';
+import { Check, Clock, AlertTriangle, Plus, ChevronRight, Home, Pencil, Trash2, Cpu } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 
 // Device type to emoji mapping
 const deviceEmojis: Record<string, string> = {
@@ -190,19 +191,19 @@ export default function HouseDetailPage({ params }: { params: Promise<{ id: stri
 
         {/* Devices List */}
         {sortedDevices.length === 0 ? (
-          <Card className="bg-white/80 dark:bg-gray-800/80">
-            <CardHeader>
-              <CardTitle>{tDevices('noDevicesYet')}</CardTitle>
-              <CardDescription>
-                {tDevices('noDevicesDescription')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <EmptyState
+            icon={Cpu}
+            title={tDevices('noDevicesYet')}
+            description={tDevices('noDevicesDescription')}
+            action={
               <Link href={`/${locale}/houses/${id}/devices/new`}>
-                <Button>{tDevices('addDevice')}</Button>
+                <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-500/30">
+                  <Plus className="h-5 w-5 mr-2" />
+                  {tDevices('addDevice')}
+                </Button>
               </Link>
-            </CardContent>
-          </Card>
+            }
+          />
         ) : (
           <div className="space-y-4">
             {sortedDevices.map((device) => {
