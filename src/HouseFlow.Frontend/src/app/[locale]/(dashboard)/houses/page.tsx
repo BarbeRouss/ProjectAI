@@ -4,7 +4,9 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useHouses } from '@/lib/api/hooks';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import Link from 'next/link';
+import { Building2, Plus } from 'lucide-react';
 
 export default function HousesPage() {
   const t = useTranslations('houses');
@@ -37,6 +39,21 @@ export default function HousesPage() {
           </Link>
         </div>
 
+        {houses.length === 0 ? (
+          <EmptyState
+            icon={Building2}
+            title={t('noHousesYet')}
+            description={t('noHousesDescription')}
+            action={
+              <Link href={`/${locale}/houses/new`}>
+                <Button>
+                  <Plus className="h-5 w-5 mr-2" />
+                  {t('addHouse')}
+                </Button>
+              </Link>
+            }
+          />
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {houses.map((house) => (
             <Link key={house.id} href={`/${locale}/houses/${house.id}`}>
@@ -83,6 +100,7 @@ export default function HousesPage() {
             </Link>
           ))}
         </div>
+        )}
       </div>
     </div>
   );

@@ -9,7 +9,8 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth/context';
 import { HousesGridSkeleton } from '@/components/ui/skeleton';
 import { ScoreRing } from '@/components/ui/score-ring';
-import { Check, Clock, AlertTriangle, Plus, Home, ChevronRight, Wrench, Calendar } from 'lucide-react';
+import { Check, Clock, AlertTriangle, Plus, Home, ChevronRight, Wrench, Calendar, Building2 } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export default function DashboardPage() {
   const locale = useLocale();
@@ -205,19 +206,19 @@ export default function DashboardPage() {
         {isLoading ? (
           <HousesGridSkeleton />
         ) : houses.length === 0 ? (
-          <Card className="bg-white/80 dark:bg-gray-800/80">
-            <CardHeader>
-              <CardTitle>{t('noHousesYet')}</CardTitle>
-              <CardDescription>
-                {t('getStarted')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <EmptyState
+            icon={Building2}
+            title={t('noHousesYet')}
+            description={t('getStarted')}
+            action={
               <Link href={`/${locale}/houses/new`}>
-                <Button>{tHouses('addHouse')}</Button>
+                <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-500/30">
+                  <Plus className="h-5 w-5 mr-2" />
+                  {tHouses('addHouse')}
+                </Button>
               </Link>
-            </CardContent>
-          </Card>
+            }
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {houses.map((house) => {
@@ -273,35 +274,6 @@ export default function DashboardPage() {
                           : t('device', { count: house.devicesCount })}
                       </p>
 
-                      {/* Progress bar */}
-                      <div className="mb-4">
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-gray-500 dark:text-gray-400">
-                            {t('device', { count: house.devicesCount })}
-                          </span>
-                          <span className={`font-semibold ${
-                            isOverdue ? 'text-red-600' :
-                            isPending ? 'text-orange-600' : 'text-green-600'
-                          }`}>
-                            {isOverdue ? t('xOverdueStatus', { count: house.overdueCount }) :
-                             isPending ? t('xRemaining', { count: house.pendingCount }) :
-                             t('complete')}
-                          </span>
-                        </div>
-                        <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${
-                              isOverdue
-                                ? 'bg-gradient-to-r from-red-400 to-rose-500'
-                                : isPending
-                                ? 'bg-gradient-to-r from-orange-400 to-orange-500'
-                                : 'bg-gradient-to-r from-green-400 to-emerald-500'
-                            }`}
-                            style={{ width: `${house.score}%` }}
-                          />
-                        </div>
-                      </div>
-
                       <div className="flex items-center justify-between">
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${
                           isOverdue
@@ -313,6 +285,11 @@ export default function DashboardPage() {
                           {isOverdue && <AlertTriangle className="h-4 w-4" />}
                           {isPending && <Clock className="h-4 w-4" />}
                           {!isOverdue && !isPending && <Check className="h-4 w-4" />}
+                          {isOverdue ? t('xOverdueStatus', { count: house.overdueCount }) :
+                           isPending ? t('xRemaining', { count: house.pendingCount }) :
+                           t('complete')}
+                        </span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">
                           {t('device', { count: house.devicesCount })}
                         </span>
                         <span className="text-sm text-gray-400 group-hover:text-blue-500 transition flex items-center gap-1">
