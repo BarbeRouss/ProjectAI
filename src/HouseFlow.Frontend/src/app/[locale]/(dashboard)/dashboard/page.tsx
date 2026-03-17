@@ -274,35 +274,6 @@ export default function DashboardPage() {
                           : t('device', { count: house.devicesCount })}
                       </p>
 
-                      {/* Progress bar */}
-                      <div className="mb-4">
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-gray-500 dark:text-gray-400">
-                            {t('device', { count: house.devicesCount })}
-                          </span>
-                          <span className={`font-semibold ${
-                            isOverdue ? 'text-red-600' :
-                            isPending ? 'text-orange-600' : 'text-green-600'
-                          }`}>
-                            {isOverdue ? t('xOverdueStatus', { count: house.overdueCount }) :
-                             isPending ? t('xRemaining', { count: house.pendingCount }) :
-                             t('complete')}
-                          </span>
-                        </div>
-                        <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${
-                              isOverdue
-                                ? 'bg-gradient-to-r from-red-400 to-rose-500'
-                                : isPending
-                                ? 'bg-gradient-to-r from-orange-400 to-orange-500'
-                                : 'bg-gradient-to-r from-green-400 to-emerald-500'
-                            }`}
-                            style={{ width: `${house.score}%` }}
-                          />
-                        </div>
-                      </div>
-
                       <div className="flex items-center justify-between">
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${
                           isOverdue
@@ -314,6 +285,11 @@ export default function DashboardPage() {
                           {isOverdue && <AlertTriangle className="h-4 w-4" />}
                           {isPending && <Clock className="h-4 w-4" />}
                           {!isOverdue && !isPending && <Check className="h-4 w-4" />}
+                          {isOverdue ? t('xOverdueStatus', { count: house.overdueCount }) :
+                           isPending ? t('xRemaining', { count: house.pendingCount }) :
+                           t('complete')}
+                        </span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">
                           {t('device', { count: house.devicesCount })}
                         </span>
                         <span className="text-sm text-gray-400 group-hover:text-blue-500 transition flex items-center gap-1">
