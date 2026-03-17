@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
 import apiClient from '../client';
 
+type QueryOptions<T> = Omit<UseQueryOptions<T, Error>, 'queryKey' | 'queryFn'>;
+
 // DTOs matching backend collaboration model
 export interface HouseMemberDto {
   id: string;
@@ -61,7 +63,7 @@ interface UpdateMemberPermissionsRequestDto {
 /**
  * Hook to fetch all collaborators across all owned houses
  */
-export function useAllCollaborators(options?: UseQueryOptions<AllCollaboratorsResponseDto, Error>) {
+export function useAllCollaborators(options?: QueryOptions<AllCollaboratorsResponseDto>) {
   return useQuery({
     queryKey: ['collaborators'],
     queryFn: async () => {
@@ -75,7 +77,7 @@ export function useAllCollaborators(options?: UseQueryOptions<AllCollaboratorsRe
 /**
  * Hook to fetch members of a specific house
  */
-export function useHouseMembers(houseId: string, options?: UseQueryOptions<HouseMemberDto[], Error>) {
+export function useHouseMembers(houseId: string, options?: QueryOptions<HouseMemberDto[]>) {
   return useQuery({
     queryKey: ['houses', houseId, 'members'],
     queryFn: async () => {
@@ -90,7 +92,7 @@ export function useHouseMembers(houseId: string, options?: UseQueryOptions<House
 /**
  * Hook to fetch invitations for a house
  */
-export function useHouseInvitations(houseId: string, options?: UseQueryOptions<InvitationDto[], Error>) {
+export function useHouseInvitations(houseId: string, options?: QueryOptions<InvitationDto[]>) {
   return useQuery({
     queryKey: ['houses', houseId, 'invitations'],
     queryFn: async () => {
@@ -105,7 +107,7 @@ export function useHouseInvitations(houseId: string, options?: UseQueryOptions<I
 /**
  * Hook to get invitation info by token (public, no auth required)
  */
-export function useInvitationInfo(token: string, options?: UseQueryOptions<InvitationInfoDto, Error>) {
+export function useInvitationInfo(token: string, options?: QueryOptions<InvitationInfoDto>) {
   return useQuery({
     queryKey: ['invitations', token],
     queryFn: async () => {
