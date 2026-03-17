@@ -2,9 +2,33 @@
 set -euo pipefail
 
 # HouseFlow - Session initialization script for Claude Code web sessions
-# Starts Docker, restores .NET deps, installs npm deps & Playwright
+# Installs .NET 10 SDK, GitHub CLI, starts Docker, restores deps, installs Playwright
 
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+# --- .NET 10 SDK ---
+if dotnet --version 2>/dev/null | grep -q "^10\."; then
+  echo ".NET 10 SDK already installed ($(dotnet --version))."
+else
+  echo "Installing .NET 10 SDK..."
+  curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 10.0 --install-dir /usr/share/dotnet
+  export PATH="/usr/share/dotnet:$PATH"
+  echo ".NET 10 SDK installed ($(dotnet --version))."
+fi
+
+# --- GitHub CLI ---
+if command -v gh &>/dev/null; then
+  echo "GitHub CLI already installed ($(gh --version | head -1))."
+else
+  echo "Installing GitHub CLI..."
+  (type -p wget >/dev/null || (apt-get update && apt-get install wget -y))
+  mkdir -p -m 755 /etc/apt/keyrings
+  out=$(mktemp) && wget -nv -O"$out" https://cli.github.com/packages/githubcli-archive-keyring.gpg && cat "$out" | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null
+  chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+  apt-get update && apt-get install gh -y
+  echo "GitHub CLI installed ($(gh --version | head -1))."
+fi
 
 # --- Docker ---
 if command -v dockerd &>/dev/null; then
