@@ -160,8 +160,8 @@ export function MembersSection({ houseId, userRole }: MembersSectionProps) {
                   </div>
                 )}
 
-                {/* Remove button for non-owner members */}
-                {canManage && member.role !== 'Owner' && (
+                {/* Remove button for non-owner members (only owner can remove) */}
+                {isOwner && member.role !== 'Owner' && (
                   <Button
                     variant="ghost"
                     size="icon"

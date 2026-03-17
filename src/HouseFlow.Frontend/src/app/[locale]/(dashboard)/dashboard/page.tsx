@@ -246,22 +246,23 @@ export default function DashboardPage() {
                         : 'bg-gradient-to-r from-green-400 to-emerald-500'
                     }`} />
 
-                    {/* Perfect badge or Shared badge */}
-                    {isShared ? (
-                      <div className="absolute top-4 right-4 z-10">
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500 text-white rounded-full text-xs font-bold shadow-lg shadow-blue-500/30">
-                          <Users className="h-3 w-3" />
-                          {tHouses('shared')}
-                        </span>
+                    {/* Badges: shared + perfect can coexist */}
+                    {(isShared || house.score === 100) && (
+                      <div className="absolute top-4 right-4 z-10 flex gap-1.5">
+                        {isShared && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500 text-white rounded-full text-xs font-bold shadow-lg shadow-blue-500/30">
+                            <Users className="h-3 w-3" />
+                            {tHouses('shared')}
+                          </span>
+                        )}
+                        {house.score === 100 && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500 text-white rounded-full text-xs font-bold shadow-lg shadow-green-500/30">
+                            <Check className="h-3 w-3" />
+                            {t('perfect')}
+                          </span>
+                        )}
                       </div>
-                    ) : house.score === 100 ? (
-                      <div className="absolute top-4 right-4 z-10">
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500 text-white rounded-full text-xs font-bold shadow-lg shadow-green-500/30">
-                          <Check className="h-3 w-3" />
-                          {t('perfect')}
-                        </span>
-                      </div>
-                    ) : null}
+                    )}
 
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-4">
