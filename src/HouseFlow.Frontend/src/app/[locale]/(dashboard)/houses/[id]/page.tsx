@@ -72,7 +72,7 @@ export default function HouseDetailPage({ params }: { params: Promise<{ id: stri
   // Calculate progress
   const upToDateCount = house.devices?.filter(d => d.score === 100).length || 0;
   const totalDevices = house.devices?.length || 0;
-  const userRole = house.userRole || 'Owner';
+  const userRole = house.userRole || 'CollaboratorRO';
   const isOwner = userRole === 'Owner';
   const canEdit = isOwner || userRole === 'CollaboratorRW';
 
