@@ -86,6 +86,10 @@ jobs:
         working-directory: src/HouseFlow.Frontend
         run: npm run lint
 
+      - name: Unit Tests
+        working-directory: src/HouseFlow.Frontend
+        run: npm run test:unit
+
       - name: Build
         working-directory: src/HouseFlow.Frontend
         run: npm run build
