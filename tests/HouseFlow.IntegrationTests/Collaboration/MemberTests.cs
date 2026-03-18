@@ -147,7 +147,7 @@ public class MemberTests : IClassFixture<CustomWebApplicationFactory>
         var (_, memberId) = await AddMemberToHouseAsync(ownerClient, houseId, "Tenant");
 
         // Disable canLogMaintenance
-        var updateRequest = new UpdateMemberPermissionsRequestDto(false);
+        var updateRequest = new UpdateMemberPermissionsRequestDto(false, null);
         var response = await ownerClient.PutAsJsonAsync($"/api/v1/members/{memberId}/permissions", updateRequest);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);

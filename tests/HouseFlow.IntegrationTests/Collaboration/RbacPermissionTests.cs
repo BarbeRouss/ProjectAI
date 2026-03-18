@@ -438,7 +438,7 @@ public class RbacPermissionTests : IClassFixture<CustomWebApplicationFactory>
 
         await ctx.OwnerClient.PutAsJsonAsync(
             $"/api/v1/members/{tenant.Id}/permissions",
-            new UpdateMemberPermissionsRequestDto(false));
+            new UpdateMemberPermissionsRequestDto(false, null));
 
         // Tenant tries to log — should fail
         var response = await ctx.TenantClient.PostAsJsonAsync(

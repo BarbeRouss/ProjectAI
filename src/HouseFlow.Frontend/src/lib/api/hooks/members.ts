@@ -12,6 +12,7 @@ export interface HouseMemberDto {
   email: string;
   role: string;
   canLogMaintenance: boolean;
+  canViewCosts: boolean;
   joinedAt: string;
 }
 
@@ -57,7 +58,8 @@ interface UpdateMemberRoleRequestDto {
 }
 
 interface UpdateMemberPermissionsRequestDto {
-  canLogMaintenance: boolean;
+  canLogMaintenance?: boolean;
+  canViewCosts?: boolean;
 }
 
 /**
@@ -203,16 +205,16 @@ export function useUpdateMemberRole(
 }
 
 /**
- * Hook to update a member's permissions (canLogMaintenance for tenants)
+ * Hook to update a member's permissions (canLogMaintenance, canViewCosts for tenants)
  */
 export function useUpdateMemberPermissions(
-  options?: UseMutationOptions<void, Error, { memberId: string; canLogMaintenance: boolean }>
+  options?: UseMutationOptions<void, Error, { memberId: string; canLogMaintenance?: boolean; canViewCosts?: boolean }>
 ) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ memberId, canLogMaintenance }: { memberId: string; canLogMaintenance: boolean }) => {
-      await apiClient.put(`/api/v1/members/${memberId}/permissions`, { canLogMaintenance });
+    mutationFn: async ({ memberId, ...permissions }: { memberId: string; canLogMaintenance?: boolean; canViewCosts?: boolean }) => {
+      await apiClient.put(`/api/v1/members/${memberId}/permissions`, permissions);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collaborators'], refetchType: 'active' });

@@ -116,6 +116,7 @@
     "removeMemberConfirmation": "Êtes-vous sûr de vouloir retirer {name} de cette maison ?",
     "changeRole": "Changer le rôle",
     "canLogMaintenance": "Peut enregistrer des entretiens",
+    "canViewCosts": "Peut voir les coûts",
     "readOnly": "Lecture seule"
   },
   "devices": {

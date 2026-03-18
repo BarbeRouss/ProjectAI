@@ -138,7 +138,7 @@ export function MembersSection({ houseId, userRole }: MembersSectionProps) {
                           </button>
                         ))}
                         {member.role === 'Tenant' && (
-                          <div className="border-t dark:border-gray-700 px-4 py-2">
+                          <div className="border-t dark:border-gray-700 px-4 py-2 space-y-2">
                             <label className="flex items-center gap-2 text-sm cursor-pointer">
                               <input
                                 type="checkbox"
@@ -152,6 +152,20 @@ export function MembersSection({ houseId, userRole }: MembersSectionProps) {
                                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                               />
                               {t('canLogMaintenance')}
+                            </label>
+                            <label className="flex items-center gap-2 text-sm cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={member.canViewCosts}
+                                onChange={(e) => {
+                                  updatePermissions.mutate({
+                                    memberId: member.id,
+                                    canViewCosts: e.target.checked,
+                                  });
+                                }}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                              {t('canViewCosts')}
                             </label>
                           </div>
                         )}

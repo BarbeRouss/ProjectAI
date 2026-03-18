@@ -94,7 +94,7 @@ public class MembersController : ControllerBase
         try
         {
             var userId = GetUserId();
-            var result = await _memberService.UpdateMemberPermissionsAsync(memberId, request.CanLogMaintenance, userId);
+            var result = await _memberService.UpdateMemberPermissionsAsync(memberId, request.CanLogMaintenance, request.CanViewCosts, userId);
             return result ? NoContent() : NotFound();
         }
         catch (UnauthorizedAccessException)

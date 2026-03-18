@@ -173,16 +173,15 @@ public class MaintenanceService : IMaintenanceService
         await _memberService.EnsureAccessAsync(device.HouseId, userId,
             HouseRole.Owner, HouseRole.CollaboratorRW, HouseRole.CollaboratorRO, HouseRole.Tenant);
 
-        // Check if tenant - hide costs
-        var role = await _memberService.GetUserRoleAsync(device.HouseId, userId);
-        var isTenant = role == HouseRole.Tenant;
+        // Hide costs if tenant without canViewCosts permission
+        var hideCosts = await _memberService.ShouldHideCostsAsync(device.HouseId, userId);
 
         var instances = device.MaintenanceTypes
             .SelectMany(mt => mt.MaintenanceInstances.Select(i => new MaintenanceInstanceDto(
                 i.Id,
                 i.Date,
-                isTenant ? null : i.Cost,
-                isTenant ? null : i.Provider,
+                hideCosts ? null : i.Cost,
+                hideCosts ? null : i.Provider,
                 i.Notes,
                 i.MaintenanceTypeId,
                 mt.Name,
@@ -191,7 +190,7 @@ public class MaintenanceService : IMaintenanceService
             .OrderByDescending(i => i.Date)
             .ToList();
 
-        var totalSpent = isTenant ? 0 : instances.Sum(i => i.Cost ?? 0);
+        var totalSpent = hideCosts ? 0 : instances.Sum(i => i.Cost ?? 0);
 
         return new MaintenanceHistoryResponseDto(instances, totalSpent, instances.Count);
     }

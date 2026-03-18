@@ -7,6 +7,7 @@ public class HouseMember
     public Guid Id { get; set; }
     public HouseRole Role { get; set; }
     public bool CanLogMaintenance { get; set; } = true;
+    public bool CanViewCosts { get; set; } = false;
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 

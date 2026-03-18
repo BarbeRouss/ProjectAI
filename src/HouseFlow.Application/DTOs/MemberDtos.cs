@@ -10,6 +10,7 @@ public record HouseMemberDto(
     string Email,
     string Role,
     bool CanLogMaintenance,
+    bool CanViewCosts,
     DateTime CreatedAt
 );
 
@@ -19,8 +20,8 @@ public record UpdateMemberRoleRequestDto(
 );
 
 public record UpdateMemberPermissionsRequestDto(
-    [Required]
-    bool CanLogMaintenance
+    bool? CanLogMaintenance,
+    bool? CanViewCosts
 );
 
 public record InvitationDto(

@@ -116,6 +116,7 @@
     "removeMemberConfirmation": "Are you sure you want to remove {name} from this house?",
     "changeRole": "Change role",
     "canLogMaintenance": "Can log maintenance",
+    "canViewCosts": "Can view costs",
     "readOnly": "Read only"
   },
   "devices": {

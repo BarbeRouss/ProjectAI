@@ -50,7 +50,10 @@ public class DeviceService : IDeviceService
         await _memberService.EnsureAccessAsync(device.HouseId, userId,
             HouseRole.Owner, HouseRole.CollaboratorRW, HouseRole.CollaboratorRO, HouseRole.Tenant);
 
-        return CalculateDeviceDetail(device);
+        // H1: Hide cost data from Tenants unless canViewCosts is enabled
+        var hideCosts = await _memberService.ShouldHideCostsAsync(device.HouseId, userId);
+
+        return CalculateDeviceDetail(device, hideCosts);
     }
 
     public async Task<DeviceDto> CreateDeviceAsync(Guid houseId, CreateDeviceRequestDto request, Guid userId)
@@ -147,11 +150,11 @@ public class DeviceService : IDeviceService
         );
     }
 
-    private DeviceDetailDto CalculateDeviceDetail(Device device)
+    private DeviceDetailDto CalculateDeviceDetail(Device device, bool hideCosts = false)
     {
         var (score, status, pendingCount) = _calculator.CalculateDeviceScore(device);
         var maintenanceTypes = device.MaintenanceTypes.Select(mt => _calculator.CalculateMaintenanceTypeWithStatus(mt)).ToList();
-        var totalSpent = device.MaintenanceTypes
+        var totalSpent = hideCosts ? 0 : device.MaintenanceTypes
             .SelectMany(mt => mt.MaintenanceInstances)
             .Sum(i => i.Cost ?? 0);
         var maintenanceCount = device.MaintenanceTypes
