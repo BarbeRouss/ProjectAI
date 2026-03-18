@@ -52,6 +52,19 @@ Patterns et erreurs à éviter, capturés après corrections.
 
 ---
 
+## 2026-03-18
+
+### Accès à l'API GitHub : utiliser `gh` CLI, pas `curl` sur le proxy Git
+**Contexte:** Tentative d'accéder aux commentaires de PR via `curl` sur le proxy local (`127.0.0.1:<port>/api/v1/...`) → `400 Invalid path format`.
+**Cause:** Le proxy Git local n'expose que le protocole Git smart HTTP (`/git/...` → `info/refs`, `git-upload-pack`, `git-receive-pack`). Il ne proxifie PAS l'API REST GitHub/Gitea. De plus le port du proxy est dynamique et change entre les sessions.
+**Leçon:** TOUJOURS utiliser `gh` CLI pour interagir avec l'API GitHub (PRs, issues, commentaires, checks, reviews). Exemples :
+- `gh api repos/OWNER/REPO/pulls/N/comments` → commentaires de review
+- `gh pr checks N` → statut CI
+- `gh pr view N` → détails PR
+- Le proxy local sert uniquement pour `git fetch/push/clone`. Ne jamais tenter `curl` dessus pour l'API REST.
+
+---
+
 ## Template
 
 ### [Titre court du problème]

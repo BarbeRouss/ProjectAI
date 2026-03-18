@@ -44,16 +44,9 @@ public class MembersController : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<HouseMemberDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetHouseMembers(Guid houseId)
     {
-        try
-        {
-            var userId = GetUserId();
-            var members = await _memberService.GetHouseMembersAsync(houseId, userId);
-            return Ok(members);
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
+        var userId = GetUserId();
+        var members = await _memberService.GetHouseMembersAsync(houseId, userId);
+        return Ok(members);
     }
 
     /// <summary>
@@ -64,23 +57,12 @@ public class MembersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateMemberRole(Guid memberId, [FromBody] UpdateMemberRoleRequestDto request)
     {
-        try
-        {
-            var userId = GetUserId();
-            if (!Enum.TryParse<HouseRole>(request.Role, true, out var role))
-                return BadRequest(new { error = "Invalid role. Must be CollaboratorRW, CollaboratorRO, or Tenant" });
+        var userId = GetUserId();
+        if (!Enum.TryParse<HouseRole>(request.Role, true, out var role))
+            return BadRequest(new { error = "Invalid role. Must be CollaboratorRW, CollaboratorRO, or Tenant" });
 
-            var result = await _memberService.UpdateMemberRoleAsync(memberId, role, userId);
-            return result == null ? NotFound() : Ok(result);
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var result = await _memberService.UpdateMemberRoleAsync(memberId, role, userId);
+        return result == null ? NotFound() : Ok(result);
     }
 
     /// <summary>
@@ -91,20 +73,9 @@ public class MembersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateMemberPermissions(Guid memberId, [FromBody] UpdateMemberPermissionsRequestDto request)
     {
-        try
-        {
-            var userId = GetUserId();
-            var result = await _memberService.UpdateMemberPermissionsAsync(memberId, request.CanLogMaintenance, request.CanViewCosts, userId);
-            return result ? NoContent() : NotFound();
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var userId = GetUserId();
+        var result = await _memberService.UpdateMemberPermissionsAsync(memberId, request.CanLogMaintenance, request.CanViewCosts, userId);
+        return result ? NoContent() : NotFound();
     }
 
     /// <summary>
@@ -115,20 +86,9 @@ public class MembersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RemoveMember(Guid memberId)
     {
-        try
-        {
-            var userId = GetUserId();
-            var result = await _memberService.RemoveMemberAsync(memberId, userId);
-            return result ? NoContent() : NotFound();
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var userId = GetUserId();
+        var result = await _memberService.RemoveMemberAsync(memberId, userId);
+        return result ? NoContent() : NotFound();
     }
 }
 
@@ -158,23 +118,12 @@ public class InvitationsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateInvitation(Guid houseId, [FromBody] CreateInvitationRequestDto request)
     {
-        try
-        {
-            var userId = GetUserId();
-            if (!Enum.TryParse<HouseRole>(request.Role, true, out var role))
-                return BadRequest(new { error = "Invalid role. Must be CollaboratorRW, CollaboratorRO, or Tenant" });
+        var userId = GetUserId();
+        if (!Enum.TryParse<HouseRole>(request.Role, true, out var role))
+            return BadRequest(new { error = "Invalid role. Must be CollaboratorRW, CollaboratorRO, or Tenant" });
 
-            var invitation = await _memberService.CreateInvitationAsync(houseId, role, userId);
-            return CreatedAtAction(nameof(GetInvitationInfo), new { token = invitation.Token }, invitation);
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var invitation = await _memberService.CreateInvitationAsync(houseId, role, userId);
+        return CreatedAtAction(nameof(GetInvitationInfo), new { token = invitation.Token }, invitation);
     }
 
     /// <summary>
@@ -185,16 +134,9 @@ public class InvitationsController : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<InvitationDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetHouseInvitations(Guid houseId)
     {
-        try
-        {
-            var userId = GetUserId();
-            var invitations = await _memberService.GetHouseInvitationsAsync(houseId, userId);
-            return Ok(invitations);
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
+        var userId = GetUserId();
+        var invitations = await _memberService.GetHouseInvitationsAsync(houseId, userId);
+        return Ok(invitations);
     }
 
     /// <summary>
@@ -218,20 +160,9 @@ public class InvitationsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> AcceptInvitation(string token)
     {
-        try
-        {
-            var userId = GetUserId();
-            var result = await _memberService.AcceptInvitationAsync(token, userId);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { error = "Invitation not found" });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var userId = GetUserId();
+        var result = await _memberService.AcceptInvitationAsync(token, userId);
+        return Ok(result);
     }
 
     /// <summary>
@@ -243,19 +174,8 @@ public class InvitationsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RevokeInvitation(Guid invitationId)
     {
-        try
-        {
-            var userId = GetUserId();
-            var result = await _memberService.RevokeInvitationAsync(invitationId, userId);
-            return result ? NoContent() : NotFound();
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var userId = GetUserId();
+        var result = await _memberService.RevokeInvitationAsync(invitationId, userId);
+        return result ? NoContent() : NotFound();
     }
 }

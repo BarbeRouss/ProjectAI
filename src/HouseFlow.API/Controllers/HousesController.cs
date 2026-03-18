@@ -78,22 +78,15 @@ public class HousesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateHouse(Guid houseId, [FromBody] UpdateHouseRequestDto request)
     {
-        try
-        {
-            var userId = GetUserId();
-            var house = await _houseService.UpdateHouseAsync(houseId, request, userId);
+        var userId = GetUserId();
+        var house = await _houseService.UpdateHouseAsync(houseId, request, userId);
 
-            if (house == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(house);
-        }
-        catch (UnauthorizedAccessException)
+        if (house == null)
         {
-            return Forbid();
+            return NotFound();
         }
+
+        return Ok(house);
     }
 
     /// <summary>
@@ -105,21 +98,14 @@ public class HousesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteHouse(Guid houseId)
     {
-        try
-        {
-            var userId = GetUserId();
-            var deleted = await _houseService.DeleteHouseAsync(houseId, userId);
+        var userId = GetUserId();
+        var deleted = await _houseService.DeleteHouseAsync(houseId, userId);
 
-            if (!deleted)
-            {
-                return NotFound();
-            }
-
-            return NoContent();
-        }
-        catch (UnauthorizedAccessException)
+        if (!deleted)
         {
-            return Forbid();
+            return NotFound();
         }
+
+        return NoContent();
     }
 }

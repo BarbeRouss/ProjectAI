@@ -2,6 +2,7 @@ using System.Text;
 using System.Threading.RateLimiting;
 using Hangfire;
 using Hangfire.PostgreSql;
+using HouseFlow.API.Filters;
 using HouseFlow.API.Middleware;
 using HouseFlow.Application.Interfaces;
 using HouseFlow.Core.Entities;
@@ -36,7 +37,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog();
 
 // Add services to the container.
-builder.Services.AddControllers()
+builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add<DomainExceptionFilter>();
+    })
     .AddJsonOptions(options =>
     {
         // Support string-to-enum conversion for JSON requests
