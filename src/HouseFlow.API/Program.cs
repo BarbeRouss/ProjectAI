@@ -1,9 +1,12 @@
 using System.Text;
 using System.Threading.RateLimiting;
+using Hangfire;
+using Hangfire.PostgreSql;
 using HouseFlow.API.Middleware;
 using HouseFlow.Application.Interfaces;
 using HouseFlow.Core.Entities;
 using HouseFlow.Infrastructure.Data;
+using HouseFlow.Infrastructure.Jobs;
 using HouseFlow.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
@@ -82,6 +85,25 @@ builder.Services.AddScoped<IDeviceService, DeviceService>();
 builder.Services.AddScoped<IMaintenanceService, MaintenanceService>();
 builder.Services.AddScoped<IMaintenanceCalculatorService, MaintenanceCalculatorService>();
 builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
+builder.Services.AddScoped<CleanupExpiredInvitationsJob>();
+
+// Hangfire (background jobs) — uses a separate "hangfire" schema
+var hangfireEnabled = false;
+if (builder.Environment.EnvironmentName != "Testing")
+{
+    var hangfireConnStr = builder.Configuration.GetConnectionString("houseflow");
+    if (!string.IsNullOrEmpty(hangfireConnStr))
+    {
+        hangfireEnabled = true;
+        builder.Services.AddHangfire(config => config
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(hangfireConnStr),
+                new PostgreSqlStorageOptions { SchemaName = "hangfire" }));
+        builder.Services.AddHangfireServer();
+    }
+}
 
 // JWT Authentication
 // JWT Key priority: 1. Environment variable 2. Configuration file 3. User secrets
@@ -249,6 +271,20 @@ var app = builder.Build();
             logger.LogInformation("Default admin user created: {Email}", adminEmail);
         }
     }
+}
+
+// Hangfire dashboard + recurring jobs
+if (hangfireEnabled)
+{
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseHangfireDashboard("/hangfire");
+    }
+
+    RecurringJob.AddOrUpdate<CleanupExpiredInvitationsJob>(
+        "cleanup-expired-invitations",
+        job => job.ExecuteAsync(),
+        Cron.Daily); // Runs once per day
 }
 
 // Configure the HTTP request pipeline.

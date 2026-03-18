@@ -288,6 +288,28 @@ npm run test:debug    # Debug mode
 - Backend: 115 tests passing (7 unit + 108 integration)
 - Frontend E2E: 70 tests passing
 
+## Recent Changes (2026-03-18)
+
+### Phase 2: Security Hardening & Background Jobs
+1. **Hangfire Background Jobs**:
+   - Added Hangfire with PostgreSQL storage (separate `hangfire` schema)
+   - `CleanupExpiredInvitationsJob`: daily job that marks expired invitations and deletes old ones (>30 days)
+   - Dashboard available at `/hangfire` in Development only
+   - Packages: `Hangfire.AspNetCore`, `Hangfire.PostgreSql`, `Hangfire.Core`
+
+2. **Security Fixes**:
+   - Cryptographic invitation tokens (32 bytes via `RandomNumberGenerator`)
+   - Serializable transactions for invitation acceptance (race condition prevention)
+   - Token redaction for non-owner users
+   - Max 20 pending invitations per house
+   - Self-accept prevention, inviter name masking
+   - `CanViewCosts` permission for tenants (new DB column + migration)
+
+3. **CI Improvements**:
+   - Added `JunitXml.TestLogger` to test projects for CI test reports
+   - `dorny/test-reporter` for backend, frontend unit, and E2E test results
+   - Added `permissions: checks: write` to workflow
+
 ## Recent Changes (2026-03-17)
 
 ### Phase 2: Collaboration
