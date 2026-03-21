@@ -63,6 +63,11 @@ Patterns et erreurs à éviter, capturés après corrections.
 - `gh pr view N` → détails PR
 - Le proxy local sert uniquement pour `git fetch/push/clone`. Ne jamais tenter `curl` dessus pour l'API REST.
 
+### Toujours exécuter le script d'initialisation avant les tests d'intégration
+**Contexte:** Tests d'intégration (Testcontainers) échouaient tous (144/144) car Docker n'était pas démarré.
+**Cause:** Le script `scripts/init-session.sh` n'a pas été exécuté en début de session. Il démarre Docker, PostgreSQL, et installe les dépendances.
+**Leçon:** TOUJOURS exécuter `bash scripts/init-session.sh` en début de session web avant de lancer les tests. Ne pas conclure "Docker n'est pas disponible" sans avoir d'abord cherché un script d'initialisation.
+
 ---
 
 ## Template
