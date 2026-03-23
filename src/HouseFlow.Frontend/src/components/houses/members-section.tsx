@@ -14,6 +14,7 @@ import {
 import type { HouseMemberDto, InvitationDto } from '@/lib/api/hooks/members';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, Copy, Check, Trash2, Shield, Link2, ChevronDown } from 'lucide-react';
 
 const ROLES = ['CollaboratorRW', 'CollaboratorRO', 'Tenant'] as const;
@@ -198,15 +199,16 @@ export function MembersSection({ houseId, userRole }: MembersSectionProps) {
               {t('createInvitation')}
             </h4>
             <div className="flex gap-2">
-              <select
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm"
-              >
-                {availableRoles.map((role) => (
-                  <option key={role} value={role}>{t(roleTranslationKey[role])}</option>
-                ))}
-              </select>
+              <Select value={selectedRole} onValueChange={setSelectedRole}>
+                <SelectTrigger className="flex-1 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableRoles.map((role) => (
+                    <SelectItem key={role} value={role}>{t(roleTranslationKey[role])}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button
                 onClick={handleCreateInvitation}
                 disabled={createInvitation.isPending}
