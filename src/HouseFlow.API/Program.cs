@@ -239,7 +239,8 @@ if (!builder.Environment.IsDevelopment() && builder.Environment.EnvironmentName 
 
 var app = builder.Build();
 
-// Apply pending migrations automatically
+// --migrate mode: apply migrations and exit (used by init containers / CI)
+if (args.Contains("--migrate"))
 {
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<HouseFlowDbContext>();
@@ -247,7 +248,9 @@ var app = builder.Build();
 
     try
     {
+        logger.LogInformation("Running database migrations...");
         dbContext.Database.Migrate();
+        logger.LogInformation("Database migrations applied successfully.");
     }
     catch (Exception ex)
     {
@@ -255,25 +258,39 @@ var app = builder.Build();
         throw;
     }
 
-    // Seed default admin user (Development only - NOT for production)
-    if (app.Environment.IsDevelopment())
+    return; // Exit after migration — do not start the web server
+}
+
+// Auto-migrate only in Testing environment (integration tests via Testcontainers)
+if (app.Environment.EnvironmentName == "Testing")
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<HouseFlowDbContext>();
+    dbContext.Database.Migrate();
+}
+
+// Seed default admin user (Development only - NOT for production)
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<HouseFlowDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    const string adminEmail = "admin@admin.com";
+    if (!dbContext.Users.Any(u => u.Email == adminEmail))
     {
-        const string adminEmail = "admin@admin.com";
-        if (!dbContext.Users.Any(u => u.Email == adminEmail))
+        var adminUser = new User
         {
-            var adminUser = new User
-            {
-                Id = Guid.NewGuid(),
-                Email = adminEmail,
-                PasswordHash = BCryptNet.HashPassword("admin"),
-                FirstName = "Admin",
-                LastName = "User",
-                CreatedAt = DateTime.UtcNow
-            };
-            dbContext.Users.Add(adminUser);
-            dbContext.SaveChanges();
-            logger.LogInformation("Default admin user created: {Email}", adminEmail);
-        }
+            Id = Guid.NewGuid(),
+            Email = adminEmail,
+            PasswordHash = BCryptNet.HashPassword("admin"),
+            FirstName = "Admin",
+            LastName = "User",
+            CreatedAt = DateTime.UtcNow
+        };
+        dbContext.Users.Add(adminUser);
+        dbContext.SaveChanges();
+        logger.LogInformation("Default admin user created: {Email}", adminEmail);
     }
 }
 
