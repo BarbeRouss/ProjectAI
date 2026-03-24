@@ -1,5 +1,6 @@
 using System.Text;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Hangfire;
 using Hangfire.PostgreSql;
 using HouseFlow.API.Filters;
@@ -188,29 +189,37 @@ if (!builder.Environment.IsDevelopment() && builder.Environment.EnvironmentName 
 {
     builder.Services.AddRateLimiter(options =>
     {
-        // Auth endpoints: 5 requests per minute (prevent brute force)
-        options.AddFixedWindowLimiter("auth", limiterOptions =>
-        {
-            limiterOptions.PermitLimit = 5;
-            limiterOptions.Window = TimeSpan.FromMinutes(1);
-            limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-            limiterOptions.QueueLimit = 0; // No queueing
-        });
+        // Auth endpoints: 5 requests per minute per IP (prevent brute force)
+        options.AddPolicy("auth", httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: GetClientIp(httpContext),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    AutoReplenishment = true,
+                    PermitLimit = 5,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    QueueLimit = 0
+                }));
 
-        // API endpoints: 100 requests per minute
-        options.AddFixedWindowLimiter("api", limiterOptions =>
-        {
-            limiterOptions.PermitLimit = 100;
-            limiterOptions.Window = TimeSpan.FromMinutes(1);
-            limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-            limiterOptions.QueueLimit = 10;
-        });
+        // API endpoints: 100 requests per minute per IP
+        options.AddPolicy("api", httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: GetClientIp(httpContext),
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    AutoReplenishment = true,
+                    PermitLimit = 100,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    QueueLimit = 10
+                }));
 
-        // Global fallback: 200 requests per minute
+        // Global fallback: 200 requests per minute per IP
         options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
             RateLimitPartition.GetFixedWindowLimiter(
-                partitionKey: httpContext.User.Identity?.Name ?? httpContext.Request.Headers.Host.ToString(),
-                factory: partition => new FixedWindowRateLimiterOptions
+                partitionKey: GetClientIp(httpContext),
+                factory: _ => new FixedWindowRateLimiterOptions
                 {
                     AutoReplenishment = true,
                     PermitLimit = 200,
@@ -299,6 +308,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUi();
 }
 
+// Forward headers from reverse proxy (must be before any middleware that uses client IP)
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
 app.UseHttpsRedirection();
 
 // Security headers middleware
@@ -333,4 +348,14 @@ catch (Exception ex)
 finally
 {
     Log.CloseAndFlush();
+}
+
+/// <summary>
+/// Extracts the client IP address from the HTTP context.
+/// Uses RemoteIpAddress which is populated by the ForwardedHeaders middleware
+/// when behind a reverse proxy (X-Forwarded-For), or the direct connection IP otherwise.
+/// </summary>
+static string GetClientIp(HttpContext context)
+{
+    return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 }
