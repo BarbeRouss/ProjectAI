@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { useAuth } from '@/lib/auth/context';
 
@@ -9,28 +9,41 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const locale = useLocale();
-  // Track whether the user was already authenticated when this layout mounted.
-  // This prevents the layout from hijacking redirects set by login/register forms
-  // when they authenticate the user and navigate to a specific destination.
-  const wasAuthenticatedOnMount = useRef<boolean | null>(null);
+  const pathname = usePathname();
+
+  // Track whether auth transitioned from false→true (user just logged in/registered).
+  // This distinguishes "user authenticated via form" from "user was already authenticated".
+  const wasAuthenticated = useRef<boolean | null>(null);
+  const authJustChanged = useRef(false);
 
   useEffect(() => {
-    if (!isLoading && wasAuthenticatedOnMount.current === null) {
-      wasAuthenticatedOnMount.current = isAuthenticated;
+    if (!isLoading) {
+      if (wasAuthenticated.current === false && isAuthenticated) {
+        // Auth transitioned false→true: form just authenticated the user.
+        // The form handles its own redirect — don't interfere.
+        authJustChanged.current = true;
+      }
+      wasAuthenticated.current = isAuthenticated;
     }
-  }, [isLoading, isAuthenticated]);
+  }, [isAuthenticated, isLoading]);
 
   useEffect(() => {
-    // Only redirect if the user was already authenticated when they navigated
-    // to this auth page (e.g. manually visiting /login while logged in).
-    // Do NOT redirect if they just authenticated via the form — the form
-    // handles its own redirect (e.g. to /houses/{id}/devices/new).
-    if (!isLoading && isAuthenticated && wasAuthenticatedOnMount.current) {
+    if (!isLoading && isAuthenticated) {
+      if (authJustChanged.current) {
+        // Form just authenticated — let it handle its own redirect
+        // (e.g. to /houses/{id}/devices/new instead of /dashboard)
+        authJustChanged.current = false;
+        return;
+      }
+      // User is authenticated but didn't just authenticate here:
+      // either they navigated to an auth page while logged in,
+      // or pressed the back button to return to /register or /login.
       router.replace(`/${locale}/dashboard`);
     }
-  }, [isAuthenticated, isLoading, router, locale]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, isLoading, isAuthenticated, router, locale]);
 
-  if (isLoading || (isAuthenticated && wasAuthenticatedOnMount.current)) {
+  if (isLoading || isAuthenticated) {
     return null;
   }
 
