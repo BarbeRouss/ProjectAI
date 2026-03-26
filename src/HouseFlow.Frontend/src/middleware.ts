@@ -4,13 +4,8 @@ import { locales, defaultLocale } from './lib/i18n/config';
 import { buildCspHeader } from './lib/csp';
 
 const intlMiddleware = createIntlMiddleware({
-  // A list of all locales that are supported
   locales,
-
-  // Used when no locale matches
   defaultLocale,
-
-  // Always use locale prefix (e.g., /fr/dashboard instead of /dashboard)
   localePrefix: 'always',
 });
 
@@ -22,16 +17,21 @@ export default function middleware(request: NextRequest) {
   const isDev = process.env.NODE_ENV === 'development';
   const cspHeader = buildCspHeader(nonce, isDev);
 
-  // Run intl middleware
+  // Run intl middleware (handles locale routing, redirects, rewrites)
   const response = intlMiddleware(request);
 
   // Set CSP header on response
   response.headers.set('Content-Security-Policy', cspHeader);
 
-  // Propagate nonce to server components via Next.js request header forwarding.
-  // Next.js reads x-middleware-request-* response headers and exposes them
-  // as request headers to server components via headers().
-  response.headers.set('x-middleware-request-x-nonce', nonce);
+  // Pass nonce to server components via a short-lived cookie.
+  // Using x-middleware-override-headers breaks intl routing, so we use cookies
+  // instead — they're available in server components via cookies() and don't
+  // interfere with Next.js internal routing mechanisms.
+  response.cookies.set('__csp_nonce', nonce, {
+    httpOnly: true,
+    sameSite: 'strict',
+    path: '/',
+  });
 
   return response;
 }
