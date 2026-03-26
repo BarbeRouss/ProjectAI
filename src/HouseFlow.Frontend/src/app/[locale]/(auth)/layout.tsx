@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { useAuth } from '@/lib/auth/context';
 import { consumeFormRedirecting } from '@/lib/auth/redirect-guard';
@@ -10,6 +10,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const locale = useLocale();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
