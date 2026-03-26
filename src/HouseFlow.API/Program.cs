@@ -62,11 +62,11 @@ else if (builder.Environment.EnvironmentName == "CI")
         options.UseNpgsql(connectionString, npgsqlOptions =>
             npgsqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 }
-else if (builder.Environment.IsProduction())
+else if (builder.Environment.IsProduction() || builder.Environment.EnvironmentName == "Staging")
 {
-    // Production: standard EF Core with connection string from environment/config
+    // Production/Staging: standard EF Core with connection string from environment/config
     var connectionString = builder.Configuration.GetConnectionString("houseflow")
-        ?? throw new InvalidOperationException("ConnectionStrings:houseflow not configured for Production");
+        ?? throw new InvalidOperationException("ConnectionStrings:houseflow not configured for Production/Staging");
     builder.Services.AddDbContext<HouseFlowDbContext>(options =>
         options.UseNpgsql(connectionString, npgsqlOptions =>
             npgsqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
