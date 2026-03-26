@@ -22,16 +22,16 @@ export default function middleware(request: NextRequest) {
   const isDev = process.env.NODE_ENV === 'development';
   const cspHeader = buildCspHeader(nonce, isDev);
 
-  // Add nonce to request headers so server components can read it via headers()
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-nonce', nonce);
-
-  // Run intl middleware with the modified request
+  // Run intl middleware
   const response = intlMiddleware(request);
 
-  // Set CSP and nonce headers on the response
+  // Set CSP header on response
   response.headers.set('Content-Security-Policy', cspHeader);
-  response.headers.set('x-nonce', nonce);
+
+  // Propagate nonce to server components via Next.js request header forwarding.
+  // Next.js reads x-middleware-request-* response headers and exposes them
+  // as request headers to server components via headers().
+  response.headers.set('x-middleware-request-x-nonce', nonce);
 
   return response;
 }
