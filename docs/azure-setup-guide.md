@@ -9,6 +9,20 @@ Checklist manuelle à réaliser avant de déployer l'infrastructure Terraform.
 - [ ] Souscription Azure active (le tier gratuit suffit pour Container Apps)
 - [ ] Azure CLI installé (`winget install Microsoft.AzureCLI` ou [instructions](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli))
 - [ ] Être connecté : `az login`
+- [ ] Enregistrer les Resource Providers nécessaires (une seule fois) :
+
+```powershell
+az provider register --namespace Microsoft.App
+az provider register --namespace Microsoft.DBforPostgreSQL
+az provider register --namespace Microsoft.OperationalInsights
+az provider register --namespace Microsoft.Storage
+az provider register --namespace Microsoft.ManagedIdentity
+az provider register --namespace Microsoft.OperationsManagement
+az provider register --namespace Microsoft.PolicyInsights
+
+# Vérifier (peut prendre quelques minutes par provider)
+az provider list --query "[?contains('Microsoft.App Microsoft.DBforPostgreSQL Microsoft.OperationalInsights Microsoft.Storage Microsoft.ManagedIdentity Microsoft.OperationsManagement Microsoft.PolicyInsights', namespace)].{namespace:namespace, state:registrationState}" -o table
+```
 
 ## 1. Azure AD — App Registration (Workload Identity Federation)
 
@@ -108,15 +122,6 @@ az role assignment create `
 ## 4. Azure Policies — protection anti-dérapage (niveau souscription)
 
 Ces policies s'appliquent **au niveau de la souscription** : elles couvrent tous les Resource Groups (actuels et futurs). Même avec des credentials volées, les ressources non-autorisées sont **refusées à la création**.
-
-```powershell
-# Prérequis : enregistrer le provider PolicyInsights (nécessaire pour la compliance)
-az provider register --namespace Microsoft.PolicyInsights
-
-# Vérifier l'enregistrement (peut prendre quelques minutes)
-az provider show --namespace Microsoft.PolicyInsights --query registrationState -o tsv
-# Attendre que le résultat soit "Registered" avant de continuer
-```
 
 > **Souscription partagée ?** Si d'autres projets existent sur la même souscription, ajoute des **exclusions** sur leurs Resource Groups lors de l'assignment (champ `--not-scopes` en CLI, ou "Exclusions" dans le portail).
 
