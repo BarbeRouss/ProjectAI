@@ -25,11 +25,20 @@ public class IntegrationTestFixture : IAsyncLifetime
     }
 
     /// <summary>
-    /// Creates a new HttpClient targeting the API service.
-    /// Use this instead of ApiClient when tests need isolated client state
-    /// (e.g., setting DefaultRequestHeaders.Authorization per user).
+    /// Creates a new HttpClient targeting the API service with its own cookie-free handler.
+    /// Each call returns a fully isolated client (no shared cookie container),
+    /// so tests don't leak auth state between clients.
     /// </summary>
-    public HttpClient CreateApiClient() => _app!.CreateHttpClient("api");
+    public HttpClient CreateApiClient()
+    {
+        // Get the base address from Aspire's service discovery
+        using var discovery = _app!.CreateHttpClient("api");
+        var baseAddress = discovery.BaseAddress;
+
+        // Return a client with its own handler — no cookie pooling
+        var handler = new HttpClientHandler { UseCookies = false, AllowAutoRedirect = false };
+        return new HttpClient(handler) { BaseAddress = baseAddress };
+    }
 
     public async Task DisposeAsync()
     {
