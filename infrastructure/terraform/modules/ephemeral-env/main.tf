@@ -83,7 +83,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "CORS__ORIGINS"
-        value = "*"
+        value = "https://ca-frontend-${local.env_name}.${var.environment_default_domain}"
       }
 
       liveness_probe {
