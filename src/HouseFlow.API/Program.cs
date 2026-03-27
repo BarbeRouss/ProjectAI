@@ -217,8 +217,12 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins(corsOrigins)
-              .AllowAnyMethod()
+        if (corsOrigins.Length == 1 && corsOrigins[0] == "*")
+            policy.SetIsOriginAllowed(_ => true);
+        else
+            policy.WithOrigins(corsOrigins);
+
+        policy.AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
     });
