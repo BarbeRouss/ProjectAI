@@ -43,12 +43,6 @@ variable "frontend_image_tag" {
 }
 
 # ── PostgreSQL ───────────────────────────────────────
-variable "pg_admin_password" {
-  description = "PostgreSQL administrator password (fallback for debug, Entra ID is primary)"
-  type        = string
-  sensitive   = true
-}
-
 variable "pg_sku" {
   description = "PostgreSQL Flexible Server SKU"
   type        = string

@@ -300,7 +300,6 @@ Ajouter dans **Settings > Secrets and variables > Actions** du repo :
 | `AZURE_TENANT_ID`         | Directory (tenant) ID                         |
 | `AZURE_SUBSCRIPTION_ID`   | `az account show --query id -o tsv`           |
 | `GHCR_PAT`               | Le PAT Classic créé à l'étape 6               |
-| `PG_ADMIN_PASSWORD`      | Mot de passe PostgreSQL (fallback, générer un mdp fort) |
 | `JWT_KEY`                | Clé JWT (minimum 32 caractères)               |
 | `ENTRA_ADMIN_OBJECT_ID`  | `$ENTRA_OBJECT_ID` de l'étape 7               |
 | `ENTRA_ADMIN_NAME`       | `$ENTRA_NAME` de l'étape 7                    |

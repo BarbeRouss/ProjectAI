@@ -3,8 +3,6 @@ resource "azurerm_postgresql_flexible_server" "main" {
   location                      = var.location
   resource_group_name           = data.azurerm_resource_group.main.name
   version                       = "16"
-  administrator_login           = "houseflow"
-  administrator_password        = var.pg_admin_password
   sku_name                      = var.pg_sku
   storage_mb                    = var.pg_storage_mb
   backup_retention_days         = 7
@@ -16,10 +14,10 @@ resource "azurerm_postgresql_flexible_server" "main" {
   delegated_subnet_id = azurerm_subnet.db.id
   private_dns_zone_id = azurerm_private_dns_zone.postgres.id
 
-  # Entra ID (Azure AD) authentication
+  # Entra ID only — no password auth
   authentication {
     active_directory_auth_enabled = true
-    password_auth_enabled         = true # Fallback for debug/migration
+    password_auth_enabled         = false
     tenant_id                     = data.azurerm_client_config.current.tenant_id
   }
 
