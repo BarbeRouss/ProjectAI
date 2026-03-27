@@ -2,16 +2,33 @@ data "azurerm_resource_group" "main" {
   name = "rg-${var.project}"
 }
 
-resource "azurerm_management_lock" "rg_no_delete" {
-  name       = "no-delete"
-  scope      = data.azurerm_resource_group.main.id
-  lock_level = "CanNotDelete"
-  notes      = "Prevent accidental deletion of the resource group"
+# Locks on critical resources only (prod + DB).
+# Not on the RG — that would block PR preview cleanup.
 
-  # Lock must be created after all resources that modify subnets/VNet
-  # (CanNotDelete blocks PostgreSQL VNet delegation and Container Apps Environment setup)
-  depends_on = [
-    azurerm_postgresql_flexible_server.main,
-    azurerm_container_app_environment.main,
-  ]
+resource "azurerm_management_lock" "db_prod" {
+  name       = "no-delete-db-prod"
+  scope      = azurerm_postgresql_flexible_server_database.prod.id
+  lock_level = "CanNotDelete"
+  notes      = "Protect production database from accidental deletion"
+}
+
+resource "azurerm_management_lock" "db_preprod" {
+  name       = "no-delete-db-preprod"
+  scope      = azurerm_postgresql_flexible_server_database.preprod.id
+  lock_level = "CanNotDelete"
+  notes      = "Protect preprod database from accidental deletion"
+}
+
+resource "azurerm_management_lock" "api_prod" {
+  name       = "no-delete-api-prod"
+  scope      = azurerm_container_app.api_prod.id
+  lock_level = "CanNotDelete"
+  notes      = "Protect production API from accidental deletion"
+}
+
+resource "azurerm_management_lock" "frontend_prod" {
+  name       = "no-delete-frontend-prod"
+  scope      = azurerm_container_app.frontend_prod.id
+  lock_level = "CanNotDelete"
+  notes      = "Protect production frontend from accidental deletion"
 }

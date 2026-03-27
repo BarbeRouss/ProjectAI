@@ -54,6 +54,11 @@ Patterns et erreurs à éviter, capturés après corrections.
 
 ## 2026-03-18
 
+### Toujours créer un test E2E pour les bugs de comportement remontés par l'utilisateur
+**Contexte:** Bug "back navigateur après inscription ramène à la page register" corrigé sans test E2E initialement.
+**Cause:** Le réflexe de créer un test de non-régression n'était pas systématique.
+**Leçon:** Quand l'utilisateur remonte un bug de comportement (UX, navigation, redirections, etc.), TOUJOURS créer un test E2E Playwright qui reproduit le scénario et valide la correction. Le test doit être ajouté dans le même commit ou immédiatement après le fix.
+
 ### Accès à l'API GitHub : utiliser `gh` CLI, pas `curl` sur le proxy Git
 **Contexte:** Tentative d'accéder aux commentaires de PR via `curl` sur le proxy local (`127.0.0.1:<port>/api/v1/...`) → `400 Invalid path format`.
 **Cause:** Le proxy Git local n'expose que le protocole Git smart HTTP (`/git/...` → `info/refs`, `git-upload-pack`, `git-receive-pack`). Il ne proxifie PAS l'API REST GitHub/Gitea. De plus le port du proxy est dynamique et change entre les sessions.
@@ -91,6 +96,19 @@ Patterns et erreurs à éviter, capturés après corrections.
 - Utiliser `userEvent.click()` (pas `fireEvent.change`) pour interagir avec le Select
 - Ajouter les polyfills jsdom dans setup.ts: `hasPointerCapture`, `setPointerCapture`, `releasePointerCapture`, `scrollIntoView`
 - Installer `@testing-library/user-event` si pas déjà présent
+
+---
+
+## 2026-03-26
+
+### TOUJOURS lancer les tests E2E Playwright avant de push
+**Contexte:** Claude Code a cassé les tests Playwright E2E à plusieurs reprises (ex: durcissement CSP) sans jamais les vérifier avant de push. L'utilisateur devait rappeler à chaque fois.
+**Cause:** La checklist pre-push dans CLAUDE.md et lessons.md ne mentionnait pas les tests Playwright. Seuls vitest, dotnet test, et next build étaient vérifiés.
+**Leçon:** TOUJOURS avant de push, exécuter `bash scripts/verify-e2e.sh` qui :
+1. Démarre les services (API + frontend) si nécessaire
+2. Lance `npx playwright test --project=chromium`
+3. Écrit un marqueur `/tmp/houseflow-e2e-verified` en cas de succès
+Un hook PreToolUse bloque `git push` si le marqueur n'existe pas ou date de plus d'1 minute. Les tests E2E détectent des régressions invisibles aux tests unitaires.
 
 ---
 

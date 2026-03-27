@@ -33,3 +33,10 @@ output "container_app_environment_id" {
   description = "Container Apps Environment ID (used by ephemeral envs)"
   value       = azurerm_container_app_environment.main.id
 }
+
+# ── Bastion ──────────────────────────────────────────
+
+output "bastion_fqdn" {
+  description = "Bastion SSH host for DB tunnel (port 2222)"
+  value       = azurerm_container_app.bastion.ingress[0].fqdn
+}

@@ -163,7 +163,9 @@ $allowedResourcesParams = @"
       "Microsoft.Network/virtualNetworks/subnets",
       "Microsoft.Network/privateDnsZones",
       "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-      "Microsoft.Network/networkSecurityGroups"
+      "Microsoft.Network/networkSecurityGroups",
+      "Microsoft.Network/publicIPAddresses",
+      "Microsoft.Network/loadBalancers"
     ]
   }
 }
@@ -303,6 +305,7 @@ Ajouter dans **Settings > Secrets and variables > Actions** du repo :
 | `JWT_KEY`                | Clé JWT (minimum 32 caractères)               |
 | `ENTRA_ADMIN_OBJECT_ID`  | `$ENTRA_OBJECT_ID` de l'étape 7               |
 | `ENTRA_ADMIN_NAME`       | `$ENTRA_NAME` de l'étape 7                    |
+| `BASTION_SSH_PUBLIC_KEY` | Contenu de `~/.ssh/id_ed25519.pub` (ou `id_rsa.pub`) |
 
 ## 9. Vérification finale
 
@@ -337,24 +340,49 @@ az storage account show --name sthouseflowtfstate `
 az ad signed-in-user show --query "{objectId:id, name:userPrincipalName}" -o table
 ```
 
-## 10. Se connecter à PostgreSQL (debug)
+## 10. Se connecter à PostgreSQL (debug via DBeaver / psql)
 
-Après déploiement, vous pouvez vous connecter à la DB sans mot de passe via votre compte Microsoft :
+La DB est dans un VNet privé (pas d'accès public). Un **Container App bastion** (scale-to-zero) fait office de tunnel SSH.
+
+### Prérequis
+
+- Clé SSH configurée (la clé publique doit être dans le secret `BASTION_SSH_PUBLIC_KEY`)
+- Le bastion scale à zéro — la première connexion prend ~30s (cold start)
+
+### Via SSH tunnel (ligne de commande)
 
 ```powershell
-# 1. Obtenir un token d'accès PostgreSQL via Azure CLI
+# 1. Obtenir un token Entra pour PostgreSQL
 $token = az account get-access-token `
   --resource-type oss-rdbms `
   --query accessToken -o tsv
 
-# 2. Se connecter avec psql (le token est le mot de passe)
-# Le host est dans le Private DNS Zone — accessible uniquement si votre poste
-# peut résoudre le DNS privé (VPN, ou accès temporaire via firewall rule)
+# 2. Ouvrir le tunnel SSH (port local 5432 → PostgreSQL privé)
+# Remplacer <bastion_fqdn> par le FQDN du bastion (visible dans terraform output)
+ssh -N -L 5432:psql-houseflow.houseflow.private.postgres.database.azure.com:5432 `
+  bastion@<bastion_fqdn> -p 2222
+
+# 3. Dans un autre terminal : se connecter
 $env:PGPASSWORD = $token
-psql "host=psql-houseflow.houseflow.private.postgres.database.azure.com port=5432 dbname=houseflow_preprod user=<votre-email> sslmode=require"
+psql "host=localhost port=5432 dbname=houseflow_preprod user=<votre-email> sslmode=require"
 ```
 
-> **Note** : La DB est dans un VNet privé. Pour y accéder depuis votre poste, vous devez temporairement activer l'accès public ou utiliser un VPN/Bastion. Pour un accès ponctuel, il est plus simple d'utiliser le **Cloud Shell** dans le portail Azure (qui a accès au VNet via le réseau Azure).
+### Via DBeaver
+
+1. **Onglet SSH** de la connexion :
+   - Host : `<bastion_fqdn>` (output Terraform `bastion_fqdn`)
+   - Port : `2222`
+   - User : `bastion`
+   - Authentication : Public Key → sélectionner votre clé privée (`~/.ssh/id_ed25519`)
+
+2. **Onglet Main** :
+   - Host : `psql-houseflow.houseflow.private.postgres.database.azure.com`
+   - Port : `5432`
+   - Database : `houseflow_preprod` (ou `houseflow_prod`)
+   - Username : votre email Microsoft (ex: `user@domain.com`)
+   - Password : le token obtenu via `az account get-access-token --resource-type oss-rdbms --query accessToken -o tsv`
+
+> **Note** : le token Entra expire après ~1h. Regénérez-le si la connexion échoue.
 
 ## Récapitulatif des protections
 
