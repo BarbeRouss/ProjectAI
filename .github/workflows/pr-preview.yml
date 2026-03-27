@@ -212,10 +212,18 @@ jobs:
         run: |
           PR_NUM="${{ github.event.pull_request.number }}"
 
-          # Destroy only the PR-specific resources
-          terraform destroy -auto-approve \
-            -target="module.pr_env[\"$PR_NUM\"]" \
-            -target="azurerm_postgresql_flexible_server_database.pr[\"$PR_NUM\"]"
+          # Destroy only the PR-specific resources (with stale lock auto-unlock)
+          DESTROY_CMD="terraform destroy -auto-approve -target=\"module.pr_env[\\\"$PR_NUM\\\"]\" -target=\"azurerm_postgresql_flexible_server_database.pr[\\\"$PR_NUM\\\"]\""
+          OUTPUT=$(eval $DESTROY_CMD 2>&1) && { echo "$OUTPUT"; exit 0; } || true
+          LOCK_ID=$(echo "$OUTPUT" | grep -oP 'ID:\s+\K[a-f0-9-]+' | head -1)
+          if [ -n "$LOCK_ID" ]; then
+            echo "State locked ($LOCK_ID) — force-unlocking..."
+            terraform force-unlock -force "$LOCK_ID"
+            eval $DESTROY_CMD
+          else
+            echo "$OUTPUT"
+            exit 1
+          fi
 
       - name: Remove preview label
         env:
