@@ -51,6 +51,23 @@ resource "azurerm_container_app" "api" {
     min_replicas = 0
     max_replicas = 1
 
+    init_container {
+      name   = "migrate"
+      image  = "${var.api_image}:${var.image_tag}"
+      cpu    = 0.25
+      memory = "0.5Gi"
+      args   = ["--migrate"]
+
+      env {
+        name        = "ConnectionStrings__houseflow"
+        secret_name = "db-connection"
+      }
+      env {
+        name  = "AZURE_CLIENT_ID"
+        value = var.identity_client_id
+      }
+    }
+
     container {
       name   = "api"
       image  = "${var.api_image}:${var.image_tag}"
