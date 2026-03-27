@@ -300,8 +300,9 @@ if (args.Contains("--migrate"))
     return; // Exit after migration — do not start the web server
 }
 
-// Auto-migrate only in Testing environment (integration tests via Testcontainers)
-if (app.Environment.EnvironmentName == "Testing")
+// Auto-migrate in Development (local dev + integration tests via Aspire)
+// Production/Staging use --migrate flag or init containers for controlled deployments
+if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<HouseFlowDbContext>();
