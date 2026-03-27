@@ -122,9 +122,6 @@ jobs:
           ARM_USE_OIDC: "true"
         run: terraform init
 
-      - name: Remove RG lock for apply
-        run: az lock delete --name no-delete --resource-group rg-houseflow || true
-
       - name: Terraform Apply
         working-directory: ${{ env.TF_DIR }}
         env:
@@ -141,10 +138,6 @@ jobs:
           TF_VAR_api_image_tag: ${{ needs.build.outputs.version }}
           TF_VAR_frontend_image_tag: ${{ needs.build.outputs.version }}
         run: terraform apply -auto-approve
-
-      - name: Restore RG lock
-        if: always()
-        run: az lock create --name no-delete --resource-group rg-houseflow --lock-type CanNotDelete --notes "Prevent accidental deletion"
 
       - name: Health Check
         working-directory: ${{ env.TF_DIR }}
@@ -202,9 +195,6 @@ jobs:
           ARM_USE_OIDC: "true"
         run: terraform init
 
-      - name: Remove RG lock for apply
-        run: az lock delete --name no-delete --resource-group rg-houseflow || true
-
       - name: Terraform Apply
         working-directory: ${{ env.TF_DIR }}
         env:
@@ -221,10 +211,6 @@ jobs:
           TF_VAR_api_image_tag: ${{ needs.build.outputs.version }}
           TF_VAR_frontend_image_tag: ${{ needs.build.outputs.version }}
         run: terraform apply -auto-approve
-
-      - name: Restore RG lock
-        if: always()
-        run: az lock create --name no-delete --resource-group rg-houseflow --lock-type CanNotDelete --notes "Prevent accidental deletion"
 
       - name: Health Check
         working-directory: ${{ env.TF_DIR }}
