@@ -97,3 +97,10 @@ variable "frontend_domain_prod" {
   type        = string
   default     = "houseflow.rouss.be"
 }
+
+# ── Bastion ──────────────────────────────────────────
+variable "bastion_ssh_public_key" {
+  description = "SSH public key for bastion access (ssh-rsa ... or ssh-ed25519 ...)"
+  type        = string
+  sensitive   = true
+}

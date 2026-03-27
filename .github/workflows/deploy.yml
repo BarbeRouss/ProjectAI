@@ -134,6 +134,7 @@ jobs:
           TF_VAR_jwt_key: ${{ secrets.JWT_KEY }}
           TF_VAR_entra_admin_object_id: ${{ secrets.ENTRA_ADMIN_OBJECT_ID }}
           TF_VAR_entra_admin_name: ${{ secrets.ENTRA_ADMIN_NAME }}
+          TF_VAR_bastion_ssh_public_key: ${{ secrets.BASTION_SSH_PUBLIC_KEY }}
           TF_VAR_api_image_tag: ${{ needs.build.outputs.version }}
           TF_VAR_frontend_image_tag: ${{ needs.build.outputs.version }}
         run: terraform apply -auto-approve
@@ -206,6 +207,7 @@ jobs:
           TF_VAR_jwt_key: ${{ secrets.JWT_KEY }}
           TF_VAR_entra_admin_object_id: ${{ secrets.ENTRA_ADMIN_OBJECT_ID }}
           TF_VAR_entra_admin_name: ${{ secrets.ENTRA_ADMIN_NAME }}
+          TF_VAR_bastion_ssh_public_key: ${{ secrets.BASTION_SSH_PUBLIC_KEY }}
           TF_VAR_api_image_tag: ${{ needs.build.outputs.version }}
           TF_VAR_frontend_image_tag: ${{ needs.build.outputs.version }}
         run: terraform apply -auto-approve
