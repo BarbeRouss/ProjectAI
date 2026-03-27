@@ -182,8 +182,8 @@ resource "azurerm_container_app" "api_preprod" {
     init_container {
       name   = "clone-prod-db"
       image  = "postgres:16-alpine"
-      cpu    = 0.5
-      memory = "1Gi"
+      cpu    = 0.25
+      memory = "0.5Gi"
 
       command = ["/bin/sh", "-c"]
       args = [<<-EOT
