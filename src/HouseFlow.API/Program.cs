@@ -93,6 +93,30 @@ else
     });
 }
 
+// --migrate mode: apply migrations and exit (used by init containers)
+// Must run before JWT/Hangfire/etc. config since init containers don't have those env vars
+if (args.Contains("--migrate"))
+{
+    var migrateApp = builder.Build();
+    using var scope = migrateApp.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<HouseFlowDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        logger.LogInformation("Running database migrations...");
+        dbContext.Database.Migrate();
+        logger.LogInformation("Database migrations applied successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while migrating the database.");
+        throw;
+    }
+
+    return; // Exit after migration — do not start the web server
+}
+
 // Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IHouseMemberService, HouseMemberService>();
@@ -277,28 +301,6 @@ if (builder.Environment.IsProduction() || builder.Environment.EnvironmentName ==
 }
 
 var app = builder.Build();
-
-// --migrate mode: apply migrations and exit (used by init containers / CI)
-if (args.Contains("--migrate"))
-{
-    using var scope = app.Services.CreateScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<HouseFlowDbContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-
-    try
-    {
-        logger.LogInformation("Running database migrations...");
-        dbContext.Database.Migrate();
-        logger.LogInformation("Database migrations applied successfully.");
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "An error occurred while migrating the database.");
-        throw;
-    }
-
-    return; // Exit after migration — do not start the web server
-}
 
 // Auto-migrate in Development (local dev + integration tests via Aspire)
 // Production/Staging use --migrate flag or init containers for controlled deployments
