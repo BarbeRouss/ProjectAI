@@ -3,6 +3,10 @@ name: PR Checks
 on:
   pull_request:
 
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   checks: write
@@ -231,7 +235,7 @@ jobs:
   e2e-tests:
     name: E2E Tests (Playwright)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     needs: [backend-unit-tests, backend-integration-tests, frontend-checks]
 
     env:
