@@ -40,6 +40,9 @@ resource "azurerm_container_app" "bastion" {
       cpu    = 0.25
       memory = "0.5Gi"
 
+      # Use Azure DNS (168.63.129.16) to resolve private DNS zones in the VNet
+      command = ["/bin/sh", "-c", "echo 'nameserver 168.63.129.16' > /etc/resolv.conf && /init"]
+
       env {
         name  = "PUID"
         value = "1000"
