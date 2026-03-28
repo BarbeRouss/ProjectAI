@@ -40,12 +40,17 @@ resource "azurerm_container_app" "bastion" {
       cpu    = 0.25
       memory = "0.5Gi"
 
-      # Container Apps internal DNS doesn't resolve private DNS zones.
-      # Override resolv.conf with Azure DNS (168.63.129.16) which resolves
-      # both private DNS zones and public DNS, then start s6-overlay.
+      # Container Apps internal DNS can't resolve private DNS zones, and
+      # /etc/resolv.conf is kubelet-mounted so can't be overwritten persistently.
+      # Workaround: resolve the PostgreSQL FQDN via Azure DNS (168.63.129.16)
+      # using busybox nslookup at startup and write the result to /etc/hosts.
       command = ["/bin/sh", "-c"]
-      args    = ["echo 'nameserver 168.63.129.16' > /etc/resolv.conf && exec /init"]
+      args    = ["PG_IP=$(nslookup $PG_FQDN 168.63.129.16 2>/dev/null | grep -i 'address' | tail -1 | awk '{print $NF}'); if [ -n \"$PG_IP\" ] && [ \"$PG_IP\" != \"168.63.129.16\" ]; then echo \"$PG_IP $PG_FQDN\" >> /etc/hosts; echo \"Resolved $PG_FQDN -> $PG_IP\"; else echo \"WARNING: Could not resolve $PG_FQDN\"; fi; exec /init"]
 
+      env {
+        name  = "PG_FQDN"
+        value = azurerm_postgresql_flexible_server.main.fqdn
+      }
       env {
         name  = "PUID"
         value = "1000"
