@@ -58,122 +58,116 @@ Plus ronde et chaleureuse, pour un positionnement plus "friendly".
 
 ## Propositions de logo
 
+**Principe** : Tous les logos sont des icones pures, sans texte ni tagline, pour fonctionner a l'international sans barriere linguistique. Chaque proposition existe en variante light et dark.
+
 ---
 
 ### Proposition 1 : "Flow Wave" (Vague fluide)
 
-**Fichier** : `proposals/proposal-1-flow-house.svg`
+**Fichiers** : `proposals/proposal-1-flow-house.svg` / `proposal-1-flow-house-dark.svg`
 
-**Concept** : Une maison dont l'interieur est anime par des ondes sinusoidales representant le "flow" - le flux continu de maintenance.
+**Concept** : Silhouette de maison remplie d'un degrade indigo, avec deux ondes sinusoidales blanches a l'interieur representant le "flow".
 
 **Motivation** :
 - La maison est immediatement reconnaissable (secteur immobilier)
-- Les vagues representent la continuite, la regularite, le flux - coeur du concept HouseFlow
+- Les vagues evoquent la continuite, la regularite, le flux - coeur du concept HouseFlow
+- Double onde : la premiere nette (maintenance active), la seconde en transparence (maintenance planifiee)
 - Le degrade indigo donne un aspect moderne et technologique
-- Le texte **House** (indigo) + **Flow** (navy) met en avant les deux concepts
-- Tagline : "MAINTENANCE SIMPLIFIEE"
+- Forme simple qui fonctionne a toutes les tailles
 
-**Quand l'utiliser** : Header de l'app, favicon (icone maison seule), emails transactionnels.
-
-**Forces** : Tres lisible, concept clair, bon equilibre entre professionnel et moderne.
+**Forces** : Concept clair et universel, bon equilibre entre professionnel et moderne.
 **Faiblesses** : Design relativement classique dans le secteur proptech.
 
 ---
 
 ### Proposition 2 : "Shield Home" (Bouclier protecteur)
 
-**Fichier** : `proposals/proposal-2-shield-home.svg`
+**Fichiers** : `proposals/proposal-2-shield-home.svg` / `proposal-2-shield-home-dark.svg`
 
-**Concept** : Un bouclier contenant une maison et un checkmark. La maintenance comme protection active de votre patrimoine.
+**Concept** : Un bouclier indigo contenant une maison blanche et un checkmark. La maintenance comme protection active du patrimoine.
 
 **Motivation** :
 - Le bouclier evoque la **protection**, la **securite**, la **fiabilite**
-- Le checkmark valide que tout est sous controle
-- Positionne HouseFlow comme un gardien de votre maison
+- Le checkmark valide que tout est sous controle - comprehensible dans toutes les cultures
 - Degrade vertical indigo → indigo fonce pour un rendu premium
-- Le texte **House** (navy) + **Flow** (indigo) inverse le contrast par rapport a P1
-- Tagline : "VOTRE MAISON, PROTEGEE"
+- La combinaison bouclier + check est universelle (pas besoin de texte)
 
-**Quand l'utiliser** : Communications rassurantes, onboarding, page de connexion.
-
-**Forces** : Inspire confiance, forte connotation de valeur (protection du patrimoine).
+**Forces** : Inspire confiance, forte connotation de valeur, symbolisme universel.
 **Faiblesses** : Peut evoquer un antivirus ou une assurance plus qu'une app de maintenance.
 
 ---
 
 ### Proposition 3 : "Circular Flow" (Cycle continu)
 
-**Fichier** : `proposals/proposal-3-circular-flow.svg`
+**Fichiers** : `proposals/proposal-3-circular-flow.svg` / `proposal-3-circular-flow-dark.svg`
 
-**Concept** : Une maison dans un cercle avec une fleche circulaire evoquant le cycle perpetuel de maintenance. Fond indigo plein.
+**Concept** : Maison blanche inscrite dans un cercle indigo, avec une fleche circulaire en filigrane evoquant le cycle perpetuel de maintenance. Porte coloree en indigo.
 
 **Motivation** :
 - Le cercle + fleche = **cycle**, **periodicite**, **recurrence** (coeur du metier)
 - La maison blanche sur fond indigo offre un contraste maximal
-- Le style "app icon" fonctionne parfaitement comme icone mobile/favicon
-- Le texte en minuscules **houseflow** donne un aspect moderne et tech
-- Weight extra-bold (800) pour une presence forte
-- Tagline : "ENTRETIEN EN CONTINU"
+- La fleche circulaire en transparence ajoute du sens sans surcharger
+- Format parfait pour app icon et favicon (carre dans cercle)
+- La porte indigo cree un point focal
 
-**Quand l'utiliser** : Icone d'app mobile, favicon, avatar sur les stores, reseaux sociaux.
-
-**Forces** : Excellent en petit format, tres "app-native", moderne.
+**Forces** : Excellent en petit format, tres "app-native", moderne, universel.
 **Faiblesses** : Le cercle avec fleche est un motif generique (recyclage, refresh).
 
 ---
 
-### Proposition 4 : "Monogramme HF" (Lettres fusionnees)
+### Proposition 4 : "Monogramme H" (Maison abstraite)
 
-**Fichier** : `proposals/proposal-4-monogram-hf.svg`
+**Fichiers** : `proposals/proposal-4-monogram-hf.svg` / `proposal-4-monogram-hf-dark.svg`
 
-**Concept** : Les lettres H et F fusionnees dans un carre arrondi. Le H est stylise en forme de maison (toit triangulaire), la barre du H est une onde "flow".
+**Concept** : Un H stylise en forme de maison (deux piliers + toit triangulaire) dans un carre arrondi. La barre transversale du H est une onde "flow".
 
 **Motivation** :
-- Monogramme memorable et unique - devient une signature visuelle
-- Le H se transforme en maison grace au toit triangulaire
-- La barre transversale ondulee du H rappelle le "flow"
-- Le F adjacent complete le mot "HF" pour HouseFlow
-- Le carre arrondi (rx:22) est le standard actuel des icones d'apps
-- Le degrade tri-tons indigo donne de la profondeur
-- Dans le texte, les H et F sont en indigo pour rappeler le monogramme
-- Tagline : "SMART HOME MAINTENANCE"
+- Abstraction memorable et unique - pas de texte, juste un symbole
+- Le H evoque "House" par sa forme de maison (toit + piliers)
+- La barre ondulee du H rappelle le "flow" de maniere organique
+- Le carre arrondi (rx:26) est le standard des icones d'apps modernes
+- Le degrade tri-tons indigo donne de la profondeur et du mouvement
+- Fonctionne comme un pictogramme universel
 
-**Quand l'utiliser** : Favicon, app icon, watermark, badge de confiance.
-
-**Forces** : Le plus distinctif, forte memorisation, versatile en taille.
-**Faiblesses** : Moins explicite que les propositions figuratives, necessite familiarisation.
+**Forces** : Le plus distinctif, forte memorisation, tres versatile en taille, aucune dependance linguistique.
+**Faiblesses** : Plus abstrait, necessite un temps de familiarisation.
 
 ---
 
 ## Recommandation
 
-| Critere               | P1 Flow Wave | P2 Shield | P3 Circular | P4 Monogramme |
-| --------------------- | :----------: | :-------: | :---------: | :-----------: |
-| Lisibilite            | ++++         | +++       | ++++        | ++            |
-| Originalite           | ++           | ++        | +++         | ++++          |
-| Versatilite (tailles) | +++          | ++        | ++++        | ++++          |
-| Evocation du metier   | ++++         | +++       | +++         | ++            |
-| Aspect premium        | +++          | ++++      | +++         | ++++          |
-| Favicon / app icon    | ++           | ++        | ++++        | ++++          |
+| Critere                    | P1 Flow Wave | P2 Shield | P3 Circular | P4 Monogramme |
+| -------------------------- | :----------: | :-------: | :---------: | :-----------: |
+| Lisibilite                 | ++++         | +++       | ++++        | +++           |
+| Originalite                | ++           | ++        | +++         | ++++          |
+| Versatilite (tailles)      | +++          | ++        | ++++        | ++++          |
+| Evocation du metier        | ++++         | +++       | ++++        | +++           |
+| Aspect premium             | +++          | ++++      | +++         | ++++          |
+| Favicon / app icon         | ++           | ++        | ++++        | ++++          |
+| Universalite (sans texte)  | ++++         | ++++      | ++++        | ++++          |
 
-**Ma recommandation** : **Combinaison P3 (icone) + P1 (logo complet)**
+**Ma recommandation** : **P4 Monogramme H**
 
-- Utiliser **P3 Circular Flow** comme **icone / favicon** (excellent en petit format, identifiable)
-- Utiliser **P1 Flow Wave** comme **logo horizontal** (header, emails, documents)
-- Cela offre un systeme de marque coherent avec deux niveaux de lecture
+Le monogramme combine le meilleur des deux mondes :
+- **Distinctif** : aucun concurrent n'a ce symbole
+- **Universel** : fonctionne sans texte dans toutes les cultures
+- **Polyvalent** : aussi lisible en 16x16 (favicon) qu'en grand format
+- **Semantique** : maison (toit) + flow (onde) dans un seul symbole
+
+Alternative : **P3 Circular Flow** si on prefere un rendu plus explicite et moins abstrait.
 
 ---
 
 ## Declinaisons prevues
 
 ### Formats
-- **Horizontal** : Logo + texte (header, emails)
-- **Icone seule** : Pour favicon (16x16, 32x32), app icon (192x192, 512x512)
-- **Vertical** : Logo au-dessus du texte (splash screen, print)
+- **Icone seule** : Favicon (16x16, 32x32), app icon (192x192, 512x512)
+- **Logo + wordmark** : Icone + "HouseFlow" a cote (header, emails, documents)
+- **Logo vertical** : Icone au-dessus du wordmark (splash screen, print)
 
 ### Variantes
-- **Sur fond clair** : Logo indigo + texte navy
-- **Sur fond sombre** : Logo blanc/indigo clair + texte blanc
+- **Sur fond clair** : Logo indigo (variante par defaut)
+- **Sur fond sombre** : Logo indigo clair (variante dark)
 - **Monochrome blanc** : Pour fonds colores
 - **Monochrome noir** : Pour impressions N&B
 
@@ -181,8 +175,8 @@ Plus ronde et chaleureuse, pour un positionnement plus "friendly".
 
 ## Prochaines etapes
 
-1. **Choisir** la proposition preferee (ou la combinaison recommandee)
-2. **Affiner** le logo choisi (proportions exactes, espacement, kerning)
-3. **Generer** les declinaisons (dark mode, monochrome, tailles)
-4. **Integrer** dans l'app (favicon, header, meta OG images)
+1. **Choisir** la proposition preferee
+2. **Affiner** le logo choisi (proportions exactes, epaisseur des traits)
+3. **Generer** toutes les declinaisons (tailles, monochrome, avec/sans wordmark)
+4. **Integrer** dans l'app (favicon, header, meta OG images, manifest)
 5. **Installer** la police Inter dans le projet Next.js
