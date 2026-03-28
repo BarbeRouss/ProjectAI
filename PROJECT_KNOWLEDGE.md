@@ -1,6 +1,6 @@
 # HouseFlow - Project Knowledge Base
 
-**Last Updated**: 2026-03-23
+**Last Updated**: 2026-03-27
 
 ## Project Overview
 
@@ -32,8 +32,15 @@
 ### Infrastructure
 - **PostgreSQL 16** for database
 - **Docker** for containerization
-- **Azure Container Apps** (deployment target)
-- **Azure Database for PostgreSQL**
+- **Terraform** for Infrastructure as Code (`infrastructure/terraform/`)
+- **Azure Container Apps** for hosting (prod, preprod, ephemeral PR envs)
+- **Azure Database for PostgreSQL Flexible Server** (B1ms, shared across envs, VNet-integrated)
+- **Azure VNet** (10.0.0.0/16) with delegated subnets for Container Apps (/23) and PostgreSQL (/28)
+- **Entra ID (Azure AD)** passwordless auth for PostgreSQL (managed identity + periodic token refresh)
+- **User-Assigned Managed Identity** shared across Container Apps for DB access
+- **GitHub Actions** with OIDC Workload Identity Federation (no Azure secrets in GitHub)
+- **GHCR** for container images (PAT `read:packages` for Azure pull)
+- **Bastion Container App** (SSH tunnel, scale-to-zero) for private DB access via DBeaver
 
 ## Architecture
 
@@ -287,6 +294,64 @@ npm run test:debug    # Debug mode
 **Current Test Status**:
 - Backend: 115 tests passing (7 unit + 108 integration)
 - Frontend E2E: 70 tests passing
+
+## Recent Changes (2026-03-27)
+
+### VNet Integration & Entra ID Passwordless Auth
+1. **Network** (`infrastructure/terraform/network.tf`):
+   - VNet 10.0.0.0/16 with delegated subnets (Container Apps /23, PostgreSQL /28)
+   - Private DNS Zone for PostgreSQL internal resolution
+   - PostgreSQL no longer publicly accessible
+
+2. **Entra ID Auth** (`infrastructure/terraform/identity.tf`, `src/HouseFlow.API/Program.cs`):
+   - User-assigned managed identity for Container Apps → PostgreSQL
+   - `DefaultAzureCredential` + `UsePeriodicPasswordProvider` for automatic token refresh
+   - Password auth disabled on PostgreSQL — Entra ID only
+   - Added `Azure.Identity` NuGet package
+
+3. **Bastion** (`infrastructure/terraform/bastion.tf`):
+   - SSH tunnel Container App (scale-to-zero) for DBeaver/psql access to private DB
+   - Image pinned to `linuxserver/openssh-server:version-10.2_p1-r0`
+
+4. **Security**:
+   - Targeted CanNotDelete locks on prod apps + prod/preprod databases (not RG-level)
+   - CORS fix: `SetIsOriginAllowed(_ => true)` when origin is wildcard (spec-compliant)
+
+## Recent Changes (2026-03-26)
+
+### US-062: Azure Container Apps Deployment with Terraform
+1. **Terraform Infrastructure** (`infrastructure/terraform/`):
+   - Provider azurerm ~4.0 with OIDC backend
+   - PostgreSQL Flexible Server (B1ms) with prod + preprod databases
+   - Container Apps Environment with 4 Container Apps (API + Frontend for prod/preprod)
+   - Log Analytics Workspace (30-day retention)
+   - Management locks (CanNotDelete) on prod Container Apps and prod/preprod databases
+   - `prevent_destroy` lifecycle on prod resources
+   - GHCR registry credentials via PAT
+
+2. **Deploy Workflow** (`.github/workflows/deploy.yml`):
+   - Replaced SSH/VM deployment with Azure OIDC + Terraform
+   - Build & push to GHCR → Terraform apply preprod → manual approval → Terraform apply prod
+   - Health checks via Container App URLs (`/alive` endpoint)
+
+3. **Security**:
+   - Custom RBAC role "HouseFlow Deployer" (not Contributor)
+   - Azure Policies: resource type allowlist + PostgreSQL SKU restriction
+   - Setup guide: `docs/azure-setup-guide.md`
+
+### US-063: Ephemeral PR Preview Environments
+1. **Terraform Module** (`infrastructure/terraform/modules/ephemeral-env/`):
+   - Creates Container Apps + database per PR
+   - Shared Container Apps Environment and PostgreSQL server
+
+2. **PR Preview Workflow** (`.github/workflows/pr-preview.yml`):
+   - Auto-deploy on PR open/sync, auto-destroy on PR close
+   - Max 3 simultaneous preview environments
+   - Posts preview URL as PR comment
+
+3. **Local Test Environment** (`docker-compose.test.yml`):
+   - Full-stack Docker Compose (API + Frontend + PostgreSQL)
+   - `docker compose -f docker-compose.test.yml up --build`
 
 ## Recent Changes (2026-03-18)
 

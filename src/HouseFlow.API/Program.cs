@@ -10,10 +10,13 @@ using HouseFlow.Core.Entities;
 using HouseFlow.Infrastructure.Data;
 using HouseFlow.Infrastructure.Jobs;
 using HouseFlow.Infrastructure.Services;
+using Azure.Core;
+using Azure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 using Serilog;
 using Serilog.Events;
 using BCryptNet = BCrypt.Net.BCrypt;
@@ -49,37 +52,69 @@ builder.Services.AddControllers(options =>
     });
 
 // Database
-if (builder.Environment.EnvironmentName == "Testing")
+if (builder.Environment.IsProduction() || builder.Environment.EnvironmentName == "Staging")
 {
-    // Connection provided by Testcontainers via CustomWebApplicationFactory
-    // DbContext is registered there — nothing to do here
-}
-else if (builder.Environment.EnvironmentName == "CI")
-{
-    // CI: use standard EF Core with explicit connection string (no Aspire orchestrator)
+    // Azure: Entra ID (Managed Identity) passwordless auth to PostgreSQL
     var connectionString = builder.Configuration.GetConnectionString("houseflow")
-        ?? throw new InvalidOperationException("ConnectionStrings:houseflow not configured for CI");
+        ?? throw new InvalidOperationException("ConnectionStrings:houseflow not configured for Production/Staging");
+
+    var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+
+    // If no password in connection string, use Entra ID token authentication
+    var connStringBuilder = new NpgsqlConnectionStringBuilder(connectionString);
+    if (string.IsNullOrEmpty(connStringBuilder.Password))
+    {
+        var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+        {
+            ManagedIdentityClientId = Environment.GetEnvironmentVariable("AZURE_CLIENT_ID")
+        });
+
+        dataSourceBuilder.UsePeriodicPasswordProvider(async (_, ct) =>
+        {
+            var token = await credential.GetTokenAsync(
+                new TokenRequestContext(["https://ossrdbms-aad.database.windows.net/.default"]), ct);
+            return token.Token;
+        }, TimeSpan.FromHours(24), TimeSpan.FromSeconds(10));
+    }
+
+    var dataSource = dataSourceBuilder.Build();
+
     builder.Services.AddDbContext<HouseFlowDbContext>(options =>
-        options.UseNpgsql(connectionString, npgsqlOptions =>
-            npgsqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
-}
-else if (builder.Environment.IsProduction())
-{
-    // Production: standard EF Core with connection string from environment/config
-    var connectionString = builder.Configuration.GetConnectionString("houseflow")
-        ?? throw new InvalidOperationException("ConnectionStrings:houseflow not configured for Production");
-    builder.Services.AddDbContext<HouseFlowDbContext>(options =>
-        options.UseNpgsql(connectionString, npgsqlOptions =>
+        options.UseNpgsql(dataSource, npgsqlOptions =>
             npgsqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 }
 else
 {
-    // Development: Aspire-managed connection
+    // Local (Development, Testing, CI): Aspire-managed connection
     builder.AddNpgsqlDbContext<HouseFlowDbContext>("houseflow", configureDbContextOptions: options =>
     {
         options.UseNpgsql(npgsqlOptions =>
             npgsqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
     });
+}
+
+// --migrate mode: apply migrations and exit (used by init containers)
+// Must run before JWT/Hangfire/etc. config since init containers don't have those env vars
+if (args.Contains("--migrate"))
+{
+    var migrateApp = builder.Build();
+    using var scope = migrateApp.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<HouseFlowDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        logger.LogInformation("Running database migrations...");
+        dbContext.Database.Migrate();
+        logger.LogInformation("Database migrations applied successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while migrating the database.");
+        throw;
+    }
+
+    return; // Exit after migration — do not start the web server
 }
 
 // Services
@@ -94,18 +129,33 @@ builder.Services.AddScoped<CleanupExpiredInvitationsJob>();
 
 // Hangfire (background jobs) — uses a separate "hangfire" schema
 var hangfireEnabled = false;
-if (builder.Environment.EnvironmentName != "Testing")
 {
     var hangfireConnStr = builder.Configuration.GetConnectionString("houseflow");
     if (!string.IsNullOrEmpty(hangfireConnStr))
     {
         hangfireEnabled = true;
+
+        // For Entra ID auth: get a token and inject it as password in the connection string
+        var hangfireConnBuilder = new NpgsqlConnectionStringBuilder(hangfireConnStr);
+        if (string.IsNullOrEmpty(hangfireConnBuilder.Password))
+        {
+            var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+            {
+                ManagedIdentityClientId = Environment.GetEnvironmentVariable("AZURE_CLIENT_ID")
+            });
+            var tokenResponse = credential.GetToken(
+                new TokenRequestContext(["https://ossrdbms-aad.database.windows.net/.default"]));
+            hangfireConnBuilder.Password = tokenResponse.Token;
+            hangfireConnStr = hangfireConnBuilder.ConnectionString;
+        }
+
         builder.Services.AddHangfire(config => config
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
             .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(hangfireConnStr),
                 new PostgreSqlStorageOptions { SchemaName = "hangfire" }));
+
         builder.Services.AddHangfireServer();
     }
 }
@@ -177,15 +227,19 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins(corsOrigins)
-              .AllowAnyMethod()
+        if (corsOrigins.Length == 1 && corsOrigins[0] == "*")
+            policy.SetIsOriginAllowed(_ => true);
+        else
+            policy.WithOrigins(corsOrigins);
+
+        policy.AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
     });
 });
 
-// Rate Limiting (disabled for Development and Testing environments to allow E2E tests)
-if (!builder.Environment.IsDevelopment() && builder.Environment.EnvironmentName != "Testing" && builder.Environment.EnvironmentName != "CI")
+// Rate Limiting (only enabled for Azure environments)
+if (builder.Environment.IsProduction() || builder.Environment.EnvironmentName == "Staging")
 {
     builder.Services.AddRateLimiter(options =>
     {
@@ -248,30 +302,9 @@ if (!builder.Environment.IsDevelopment() && builder.Environment.EnvironmentName 
 
 var app = builder.Build();
 
-// --migrate mode: apply migrations and exit (used by init containers / CI)
-if (args.Contains("--migrate"))
-{
-    using var scope = app.Services.CreateScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<HouseFlowDbContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-
-    try
-    {
-        logger.LogInformation("Running database migrations...");
-        dbContext.Database.Migrate();
-        logger.LogInformation("Database migrations applied successfully.");
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "An error occurred while migrating the database.");
-        throw;
-    }
-
-    return; // Exit after migration — do not start the web server
-}
-
-// Auto-migrate only in Testing environment (integration tests via Testcontainers)
-if (app.Environment.EnvironmentName == "Testing")
+// Auto-migrate in Development (local dev + integration tests via Aspire)
+// Production/Staging use --migrate flag or init containers for controlled deployments
+if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<HouseFlowDbContext>();
@@ -336,8 +369,8 @@ app.UseHttpsRedirection();
 // Security headers middleware
 app.UseMiddleware<SecurityHeadersMiddleware>();
 
-// Rate limiter middleware (only if rate limiting is configured)
-if (!app.Environment.IsDevelopment() && app.Environment.EnvironmentName != "Testing" && app.Environment.EnvironmentName != "CI")
+// Rate limiter middleware (only for Azure environments)
+if (app.Environment.IsProduction() || app.Environment.EnvironmentName == "Staging")
 {
     app.UseRateLimiter();
 }

@@ -533,6 +533,56 @@ Score = Moyenne des scores de toutes les maisons
 
 ---
 
+### US-062: Déploiement Azure avec Workload Identity Federation
+**En tant que** développeur
+**Je veux** déployer HouseFlow sur Azure Container Apps avec authentification OIDC (Workload Identity Federation)
+**Afin de** avoir un déploiement cloud managé, sécurisé et sans secrets Azure stockés dans GitHub
+
+**Contexte technique:**
+- Remplace le déploiement VM actuel (SSH + Docker Compose)
+- Utilise OIDC entre GitHub Actions et Azure AD (pas de client secret)
+- Infrastructure provisionnée via Terraform
+- Images Docker stockées sur GHCR (GitHub Container Registry) — pas d'ACR pour réduire les coûts
+- PAT GitHub `read:packages` (fine-grained) pour le pull GHCR depuis Azure Container Apps
+
+**Critères d'acceptation:**
+- [ ] Terraform pour provisionner l'infrastructure Azure (Resource Group, Container Apps Environment, PostgreSQL Flexible Server)
+- [ ] Configuration Workload Identity Federation (Azure AD App Registration + Federated Credential pour GitHub Actions)
+- [ ] PAT fine-grained `read:packages` pour le pull GHCR depuis Azure (stocké comme secret Terraform/Azure)
+- [ ] Workflow GitHub Actions pour build & push des images vers GHCR (via GITHUB_TOKEN)
+- [ ] Déploiement automatique en preprod (Azure Container Apps) à chaque push sur main
+- [ ] Déploiement en prod uniquement après approval GitHub (environment protection rules)
+- [ ] Health checks après chaque déploiement
+- [ ] Variables d'environnement et secrets gérés via Azure Container Apps secrets
+- [ ] Configuration réseau : PostgreSQL accessible uniquement depuis les Container Apps (VNet ou firewall rules)
+- [ ] Migration DB exécutée comme job séparé avant le déploiement de l'API
+- [ ] Documentation du setup initial (bootstrap Terraform + configuration Azure AD)
+- [ ] Suppression de l'ancien workflow de déploiement VM (SSH)
+
+---
+
+### US-063: Environnements de test éphémères par PR
+
+**En tant que** développeur, **je veux** qu'un environnement de test soit automatiquement créé pour chaque Pull Request, **afin de** pouvoir tester et faire reviewer les changements dans un environnement isolé sans impacter la preprod.
+
+**Détails techniques:**
+- Environnement Azure éphémère par PR (Container Apps + DB dédiée sur le même PostgreSQL Flexible Server)
+- Docker Compose local pour le développement et les tests rapides sur une branche
+- Nettoyage automatique à la fermeture/merge de la PR
+
+**Critères d'acceptation:**
+- [ ] Workflow GitHub Actions `on: pull_request` qui déploie un environnement éphémère Azure
+- [ ] Terraform module paramétré (ou workspace) pour créer Container Apps + database par PR
+- [ ] Images taguées par branche (`ghcr.io/.../api:pr-XX`) et poussées vers GHCR
+- [ ] Migration DB exécutée automatiquement sur la database éphémère
+- [ ] URL de preview postée en commentaire sur la PR
+- [ ] Nettoyage automatique (`on: pull_request: closed`) : Terraform destroy + drop database
+- [ ] `docker-compose.test.yml` pour lancer l'environnement complet en local (API + Frontend + PostgreSQL + seed)
+- [ ] Seed de données de test pour les environnements éphémères et locaux
+- [ ] Documentation du flux (comment tester une branche localement et via l'env Azure)
+
+---
+
 ## Résumé
 
 | Module | Stories | Phase |
@@ -546,12 +596,14 @@ Score = Moyenne des scores de toutes les maisons
 | Personnalisation | US-051 | MVP |
 | i18n | US-050 | MVP |
 | Infrastructure | US-060, US-061 | MVP |
+| Azure Deployment | US-062 | MVP |
+| Env éphémères PR | US-063 | MVP |
 | Invitations | US-100 à US-103 | Phase 2 |
 | Rôles & permissions | US-110, US-111 | Phase 2 |
 | Gestion membres | US-120 à US-123 | Phase 2 |
 | Dashboard partagé | US-130 | Phase 2 |
 
-**Total: 32 user stories (23 MVP + 9 Phase 2)**
+**Total: 34 user stories (25 MVP + 9 Phase 2)**
 
 ---
 
