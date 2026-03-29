@@ -80,7 +80,7 @@ resource "azurerm_container_app" "api_preprod" {
       }
       env {
         name  = "PROD_DB"
-        value = "houseflow_prod"
+        value = "${var.project}_prod"
       }
       env {
         name  = "PREPROD_DB"

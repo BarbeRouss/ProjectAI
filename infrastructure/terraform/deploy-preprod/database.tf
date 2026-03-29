@@ -1,7 +1,7 @@
 # ── Database ──────────────────────────────────────────
 
 resource "azurerm_postgresql_flexible_server_database" "preprod" {
-  name      = "houseflow_preprod"
+  name      = "${var.project}_preprod"
   server_id = local.main.pg_server_id
   charset   = "UTF8"
   collation = "en_US.utf8"
