@@ -121,3 +121,10 @@ resource "azurerm_container_app" "api_prod" {
     prevent_destroy = true
   }
 }
+
+resource "azurerm_management_lock" "api_prod" {
+  name       = "no-delete-api-prod"
+  scope      = azurerm_container_app.api_prod.id
+  lock_level = "CanNotDelete"
+  notes      = "Protect production API from accidental deletion"
+}

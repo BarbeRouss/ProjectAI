@@ -59,3 +59,10 @@ resource "azurerm_container_app" "frontend_prod" {
     prevent_destroy = true
   }
 }
+
+resource "azurerm_management_lock" "frontend_prod" {
+  name       = "no-delete-frontend-prod"
+  scope      = azurerm_container_app.frontend_prod.id
+  lock_level = "CanNotDelete"
+  notes      = "Protect production frontend from accidental deletion"
+}

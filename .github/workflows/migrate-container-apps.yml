@@ -181,12 +181,14 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_USE_OIDC: "true"
         run: |
-          echo "Removing Container Apps from main state..."
+          echo "Removing Container Apps and their locks from main state..."
           terraform state rm azurerm_container_app.api_prod
           terraform state rm azurerm_container_app.api_preprod
           terraform state rm azurerm_container_app.frontend_prod
           terraform state rm azurerm_container_app.frontend_preprod
-          echo "Done — Container Apps removed from main state."
+          terraform state rm azurerm_management_lock.api_prod || echo "  Lock api_prod not in state — skipping"
+          terraform state rm azurerm_management_lock.frontend_prod || echo "  Lock frontend_prod not in state — skipping"
+          echo "Done — Container Apps and locks removed from main state."
 
       # ── Step 6: Verify main state ──
       - name: Verify main/ plan
