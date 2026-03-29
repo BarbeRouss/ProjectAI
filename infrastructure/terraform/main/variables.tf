@@ -30,26 +30,14 @@ variable "ghcr_username" {
 }
 
 # ── Image tags ───────────────────────────────────────
-variable "api_image_tag_prod" {
-  description = "Docker image tag for the production API"
+variable "api_image_tag" {
+  description = "Docker image tag for the API"
   type        = string
   default     = "latest"
 }
 
-variable "api_image_tag_preprod" {
-  description = "Docker image tag for the preprod API"
-  type        = string
-  default     = "latest"
-}
-
-variable "frontend_image_tag_prod" {
-  description = "Docker image tag for the production frontend"
-  type        = string
-  default     = "latest"
-}
-
-variable "frontend_image_tag_preprod" {
-  description = "Docker image tag for the preprod frontend"
+variable "frontend_image_tag" {
+  description = "Docker image tag for the frontend"
   type        = string
   default     = "latest"
 }
