@@ -176,7 +176,7 @@ jobs:
     needs: [build, deploy-preprod]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment: production
+    environment: prod
     timeout-minutes: 15
     concurrency:
       group: terraform-deploy-prod
