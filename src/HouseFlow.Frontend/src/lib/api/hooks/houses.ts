@@ -97,19 +97,21 @@ export function useCreateHouse(
   options?: UseMutationOptions<HouseDto, Error, CreateHouseRequestDto>
 ) {
   const queryClient = useQueryClient();
+  const { onSuccess, ...restOptions } = options || {};
 
   return useMutation({
     mutationFn: async (data: CreateHouseRequestDto) => {
       const response = await apiClient.post<HouseDto>('/api/v1/houses', data);
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables, onMutateResult, context) => {
       queryClient.invalidateQueries({
         queryKey: ['houses'],
         refetchType: 'active'
       });
+      onSuccess?.(data, variables, onMutateResult, context);
     },
-    ...options,
+    ...restOptions,
   });
 }
 
@@ -121,13 +123,14 @@ export function useUpdateHouse(
   options?: UseMutationOptions<HouseDto, Error, UpdateHouseRequestDto>
 ) {
   const queryClient = useQueryClient();
+  const { onSuccess, ...restOptions } = options || {};
 
   return useMutation({
     mutationFn: async (data: UpdateHouseRequestDto) => {
       const response = await apiClient.put<HouseDto>(`/api/v1/houses/${houseId}`, data);
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables, onMutateResult, context) => {
       queryClient.invalidateQueries({
         queryKey: ['houses'],
         refetchType: 'active'
@@ -136,8 +139,9 @@ export function useUpdateHouse(
         queryKey: ['houses', houseId],
         refetchType: 'active'
       });
+      onSuccess?.(data, variables, onMutateResult, context);
     },
-    ...options,
+    ...restOptions,
   });
 }
 
@@ -148,17 +152,19 @@ export function useDeleteHouse(
   options?: UseMutationOptions<void, Error, string>
 ) {
   const queryClient = useQueryClient();
+  const { onSuccess, ...restOptions } = options || {};
 
   return useMutation({
     mutationFn: async (houseId: string) => {
       await apiClient.delete(`/api/v1/houses/${houseId}`);
     },
-    onSuccess: () => {
+    onSuccess: (data, variables, onMutateResult, context) => {
       queryClient.invalidateQueries({
         queryKey: ['houses'],
         refetchType: 'active'
       });
+      onSuccess?.(data, variables, onMutateResult, context);
     },
-    ...options,
+    ...restOptions,
   });
 }
