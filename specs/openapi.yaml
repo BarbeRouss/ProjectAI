@@ -621,7 +621,8 @@ components:
         password:
           type: string
           minLength: 8
-          description: Minimum 8 caractères
+          pattern: "^(?=.*\\d).{8,}$"
+          description: Minimum 8 caractères, au moins un chiffre
           example: "MonMotDePasse123"
 
     LoginRequest:
@@ -662,6 +663,16 @@ components:
         email:
           type: string
           format: email
+        theme:
+          type: string
+          enum: [light, dark, system]
+          default: system
+          description: Préférence de thème utilisateur
+        language:
+          type: string
+          enum: [fr, en]
+          default: fr
+          description: Langue préférée de l'utilisateur
 
     # ==========================================================================
     # HOUSES
@@ -748,6 +759,10 @@ components:
             overdueCount:
               type: integer
               description: Nombre d'entretiens en retard
+            userRole:
+              type: string
+              nullable: true
+              description: Rôle de l'utilisateur dans cette maison
 
     HousesListResponse:
       type: object
