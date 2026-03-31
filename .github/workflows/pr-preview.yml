@@ -9,6 +9,7 @@ on:
       - "infrastructure/terraform/**"
       - ".github/workflows/pr-preview.yml"
 
+# Per-PR concurrency: never cancel a running terraform apply
 concurrency:
   group: pr-preview-${{ github.event.pull_request.number }}
   cancel-in-progress: false
@@ -32,9 +33,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: preview
     timeout-minutes: 20
-    concurrency:
-      group: terraform-ephemeral
-      cancel-in-progress: false
 
     steps:
       - name: Check active PR environments
@@ -96,30 +94,9 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_USE_OIDC: "true"
-        run: terraform init
+        run: terraform init -backend-config="key=ephemeral-pr-${{ github.event.pull_request.number }}.tfstate"
 
-      - name: Build full pr_envs map
-        id: pr_envs
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          CURRENT_PR="${{ github.event.pull_request.number }}"
-          CURRENT_TAG="${{ steps.images.outputs.tag }}"
-
-          # Start with the current PR
-          PR_ENVS="{\"$CURRENT_PR\": {\"image_tag\": \"$CURRENT_TAG\"}"
-
-          # Add all other open PRs that already have a preview environment
-          OTHER_PRS=$(gh pr list --repo ${{ github.repository }} --label "preview" --json number --jq ".[].number | select(. != $CURRENT_PR)")
-          for pr in $OTHER_PRS; do
-            PR_ENVS="$PR_ENVS, \"$pr\": {\"image_tag\": \"pr-$pr\"}"
-          done
-
-          PR_ENVS="$PR_ENVS}"
-          echo "pr_envs=$PR_ENVS" >> "$GITHUB_OUTPUT"
-          echo "Built pr_envs: $PR_ENVS"
-
-      - name: Terraform Apply (create PR environment)
+      - name: Terraform Apply
         working-directory: ${{ env.TF_DIR }}
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -129,11 +106,9 @@ jobs:
           TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           TF_VAR_ghcr_pat: ${{ secrets.GHCR_PAT }}
           TF_VAR_jwt_key: ${{ secrets.JWT_KEY }}
-          TF_VAR_pr_envs: ${{ steps.pr_envs.outputs.pr_envs }}
-        run: |
-          terraform apply -auto-approve \
-            -target="azurerm_postgresql_flexible_server_database.pr[\"${{ github.event.pull_request.number }}\"]" \
-            -target="module.pr_env[\"${{ github.event.pull_request.number }}\"]"
+          TF_VAR_pr_number: ${{ github.event.pull_request.number }}
+          TF_VAR_image_tag: ${{ steps.images.outputs.tag }}
+        run: terraform apply -auto-approve
 
       - name: Get preview URLs
         id: urls
@@ -144,12 +119,8 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_USE_OIDC: "true"
         run: |
-          PR_NUM="${{ github.event.pull_request.number }}"
-          URLS=$(terraform output -json pr_env_urls)
-          API_URL=$(echo "$URLS" | jq -r ".\"$PR_NUM\".api_url")
-          FRONTEND_URL=$(echo "$URLS" | jq -r ".\"$PR_NUM\".frontend_url")
-          echo "api_url=$API_URL" >> "$GITHUB_OUTPUT"
-          echo "frontend_url=$FRONTEND_URL" >> "$GITHUB_OUTPUT"
+          echo "api_url=$(terraform output -raw api_url)" >> "$GITHUB_OUTPUT"
+          echo "frontend_url=$(terraform output -raw frontend_url)" >> "$GITHUB_OUTPUT"
 
       - name: Comment PR with preview URL
         env:
@@ -178,9 +149,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: preview
     timeout-minutes: 15
-    concurrency:
-      group: terraform-ephemeral
-      cancel-in-progress: false
 
     steps:
       - name: Checkout
@@ -205,33 +173,9 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_USE_OIDC: "true"
-        run: terraform init
+        run: terraform init -backend-config="key=ephemeral-pr-${{ github.event.pull_request.number }}.tfstate"
 
-      - name: Build pr_envs map (excluding closing PR)
-        id: pr_envs
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          CURRENT_PR="${{ github.event.pull_request.number }}"
-
-          # Build map of all OTHER open PRs that have a preview environment
-          PR_ENVS="{"
-          FIRST=true
-          OTHER_PRS=$(gh pr list --repo ${{ github.repository }} --label "preview" --json number --jq ".[].number | select(. != $CURRENT_PR)")
-          for pr in $OTHER_PRS; do
-            if [ "$FIRST" = true ]; then
-              FIRST=false
-            else
-              PR_ENVS="$PR_ENVS, "
-            fi
-            PR_ENVS="$PR_ENVS\"$pr\": {\"image_tag\": \"pr-$pr\"}"
-          done
-
-          PR_ENVS="$PR_ENVS}"
-          echo "pr_envs=$PR_ENVS" >> "$GITHUB_OUTPUT"
-          echo "Built pr_envs (excluding PR#$CURRENT_PR): $PR_ENVS"
-
-      - name: Terraform Destroy PR environment
+      - name: Terraform Destroy
         working-directory: ${{ env.TF_DIR }}
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -241,12 +185,9 @@ jobs:
           TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           TF_VAR_ghcr_pat: ${{ secrets.GHCR_PAT }}
           TF_VAR_jwt_key: ${{ secrets.JWT_KEY }}
-          TF_VAR_pr_envs: ${{ steps.pr_envs.outputs.pr_envs }}
-        run: |
-          PR_NUM="${{ github.event.pull_request.number }}"
-          terraform destroy -auto-approve \
-            -target="module.pr_env[\"$PR_NUM\"]" \
-            -target="azurerm_postgresql_flexible_server_database.pr[\"$PR_NUM\"]"
+          TF_VAR_pr_number: ${{ github.event.pull_request.number }}
+          TF_VAR_image_tag: "pr-${{ github.event.pull_request.number }}"
+        run: terraform destroy -auto-approve
 
       - name: Remove preview label
         env:

@@ -128,13 +128,10 @@ Un hook PreToolUse bloque `git push` si le marqueur n'existe pas ou date de plus
 
 ## 2026-03-31
 
-### pr_envs ne contient que la PR courante → Terraform supprime les autres environnements éphémères
-**Contexte:** Créer une PR#43 supprimait l'environnement éphémère de PR#42. Le problème était intermittent (parfois 2 envs coexistaient, parfois non).
-**Cause:** `TF_VAR_pr_envs` ne contenait que la PR en cours (ex: `{"43": {...}}`). Terraform voyait les ressources de PR#42 en state mais pas dans la config `for_each`. Même avec `-target`, le refresh/state-write pouvait marquer les autres ressources comme orphelines. Le cleanup ne passait pas du tout `pr_envs` (default `{}`), amplifiant le problème. De plus, `cancel-in-progress: true` au niveau workflow pouvait tuer un `terraform apply` en plein milieu, laissant un state corrompu. Le mécanisme de `force-unlock` pouvait ensuite casser l'opération d'une autre PR.
-**Leçon:** 
-1. TOUJOURS construire le map `pr_envs` complet (toutes les PRs actives avec le label "preview") avant un `terraform apply/destroy`. Chaque job query `gh pr list --label preview` et inclut toutes les PRs.
-2. Ne JAMAIS utiliser `cancel-in-progress: true` sur un workflow qui fait du `terraform apply/destroy` — un apply interrompu = state corrompu.
-3. Ne JAMAIS faire de `force-unlock` automatique — c'est un symptôme de problème de concurrence, pas une solution.
+### Un state Terraform partagé pour N environnements éphémères cause des suppressions croisées
+**Contexte:** Créer une PR#43 supprimait l'environnement éphémère de PR#42. Le problème était intermittent.
+**Cause:** Toutes les PRs partageaient `ephemeral.tfstate` avec `for_each = var.pr_envs`. Mais `pr_envs` ne contenait que la PR courante, donc Terraform voyait les autres comme orphelines. Le lock global sérialisait tout. `cancel-in-progress: true` pouvait tuer un apply en cours. `force-unlock` pouvait corrompre le state d'une autre PR.
+**Leçon:** Un state Terraform par environnement déployé indépendamment. Pour les environnements éphémères : `ephemeral-pr-{N}.tfstate` via `-backend-config="key=..."`. Plus de `for_each`, plus de `-target`, plus de lock global, plus de `force-unlock`. Chaque PR est totalement isolée. Même pattern que la séparation prod/preprod (leçon 2026-03-29).
 
 ---
 
