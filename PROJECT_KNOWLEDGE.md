@@ -245,6 +245,31 @@ const { theme, setTheme } = useTheme();
 setTheme('dark'); // 'light' | 'dark' | 'system'
 ```
 
+## Loading UX (Skeleton Loaders)
+
+All pages use skeleton loaders instead of "Loading..." text for better perceived performance.
+
+**Skeleton Components** (`src/HouseFlow.Frontend/src/components/ui/skeleton.tsx`):
+- `Skeleton` — Base animated placeholder (Tailwind `animate-pulse`)
+- `CardSkeleton` — House/device cards
+- `HousesGridSkeleton` — 3-column grid for houses list
+- `HouseDetailSkeleton` — House detail page (breadcrumb, header, device list)
+- `DeviceDetailSkeleton` — Device detail page (header, maintenance types, history)
+- `DashboardSkeleton` — Dashboard (hero, upcoming tasks, houses grid)
+- `ListItemSkeleton` — Maintenance/device list items
+
+**Loading Spinner** (`src/HouseFlow.Frontend/src/components/ui/loading-spinner.tsx`):
+- `LoadingSpinner` — Animated spinner (sm/md/lg)
+- `LoadingState` — Spinner with optional text label
+
+**Usage pattern** (TanStack Query):
+```tsx
+const { data, isLoading } = useHouses();
+if (isLoading) return <HousesGridSkeleton />;
+```
+
+**Button loading states** use `tCommon('loading')` text while `isPending` (forms, dialogs).
+
 ## Running the Application
 
 ### Prerequisites
@@ -301,6 +326,11 @@ npm run test:debug    # Debug mode
 - Frontend E2E: 37 tests passing
 
 ## Recent Changes (2026-03-31)
+
+### Loading Skeletons (#40)
+- Replaced last remaining "Loading..." text (houses list page) with `HousesGridSkeleton`
+- All pages now use skeleton loaders: dashboard, house detail, device detail, houses list
+- Documented skeleton component inventory and usage patterns in PROJECT_KNOWLEDGE.md
 
 ### API Retry Logic (#42)
 1. **Axios interceptor** (`src/lib/api/client.ts`): Exponential backoff (100ms→200ms→400ms) with ±25% jitter, max 3 attempts
@@ -561,7 +591,7 @@ src/HouseFlow.Frontend/src/
 │   ├── (dashboard)/      # Protected dashboard pages
 │   └── layout.tsx        # Root layout with providers
 ├── components/
-│   ├── ui/               # Shadcn/ui components
+│   ├── ui/               # Shadcn/ui components (incl. skeleton loaders)
 │   ├── providers/        # React context providers
 │   └── ...               # Feature components
 ├── lib/
@@ -643,7 +673,7 @@ NEXT_PUBLIC_API_URL=http://localhost:5203
 1. Set up backend code generation from OpenAPI (currently manual)
 2. Add more comprehensive error handling
 3. Implement retry logic for API calls
-4. Add loading skeletons instead of "Loading..." text
+4. ~~Add loading skeletons instead of "Loading..." text~~ ✅ Done (issue #40)
 5. Implement optimistic UI updates
 
 ## Contact & Resources
